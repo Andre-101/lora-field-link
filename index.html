@@ -12,7 +12,7 @@
 <body>
   <main>
     <h1>LoRaFieldLink</h1>
-    <p class="subtitle">Prueba mínima de campo: Web Serial / WebUSB fallback + GPS + ESP32-C3 + RAK3272.</p>
+    <p class="subtitle">Modo Android corregido: cada comando abre una ventana corta de lectura para capturar OK y eventos del RAK.</p>
 
     <section class="card">
       <h2>Estado</h2>
@@ -27,18 +27,20 @@
       <h2>Serial USB</h2>
       <div class="grid">
         <button id="connectNativeBtn">Conectar Web Serial</button>
-        <button id="connectWebUsbBtn" class="warning">Conectar WebUSB fallback</button>
+        <button id="connectWebUsbBtn" class="warning">Conectar WebUSB Android</button>
       </div>
       <button id="disconnectBtn" class="danger">Desconectar</button>
       <input id="commandInput" value="AT" autocapitalize="off" autocomplete="off" spellcheck="false" />
       <button id="sendBtn">Enviar comando</button>
       <div class="grid">
-        <button class="secondary" data-cmd="AT">AT</button>
-        <button class="secondary" data-cmd="AT+NJS=?">Estado JOIN</button>
-        <button class="secondary" data-cmd="AT+JOIN">JOIN</button>
-        <button class="success" data-cmd="AT+SEND=2:01">SEND 01</button>
+        <button class="secondary" data-cmd="AT" data-wait="3000">AT</button>
+        <button class="secondary" data-cmd="ATE=0" data-wait="3000">Quitar eco</button>
+        <button class="secondary" data-cmd="AT+NJS=?" data-wait="3000">Estado JOIN</button>
+        <button class="secondary" data-cmd="AT+JOIN" data-wait="30000">JOIN</button>
+        <button class="success" data-cmd="AT+SEND=2:01" data-wait="5000">SEND 01</button>
+        <button class="success" data-cmd="AT+SEND=2:02" data-wait="5000">SEND 02</button>
       </div>
-      <p class="small">Primero intenta Web Serial. Si aparece “No se encontraron dispositivos compatibles”, prueba WebUSB fallback.</p>
+      <p class="small">En Android usa WebUSB Android. La respuesta se lee después de cada comando, no con una consola continua.</p>
     </section>
 
     <section class="card"><h2>GPS del celular</h2><button id="gpsBtn">Leer GPS</button><pre id="gpsOutput">Sin datos GPS todavía.</pre></section>
@@ -55,46 +57,42 @@
   </main>
 
   <script type="module">
-    let port=null,reader=null,writer=null,keepReading=false,latestGps=null,records=[],serialBuffer="",webUsbSerial=null;
+    let port=null, latestGps=null, records=[], serialBuffer='', webUsbSerial=null;
     const encoder=new TextEncoder();
     const decoder=new TextDecoder();
-    const serialStatus=document.getElementById("serialStatus"),backendStatus=document.getElementById("backendStatus"),gpsStatus=document.getElementById("gpsStatus"),joinStatus=document.getElementById("joinStatus"),supportNote=document.getElementById("supportNote"),terminal=document.getElementById("terminal"),gpsOutput=document.getElementById("gpsOutput"),commandInput=document.getElementById("commandInput"),pointInput=document.getElementById("pointInput"),noteInput=document.getElementById("noteInput"),recordsOutput=document.getElementById("recordsOutput");
+    const serialStatus=document.getElementById('serialStatus'),backendStatus=document.getElementById('backendStatus'),gpsStatus=document.getElementById('gpsStatus'),joinStatus=document.getElementById('joinStatus'),supportNote=document.getElementById('supportNote'),terminal=document.getElementById('terminal'),gpsOutput=document.getElementById('gpsOutput'),commandInput=document.getElementById('commandInput'),pointInput=document.getElementById('pointInput'),noteInput=document.getElementById('noteInput'),recordsOutput=document.getElementById('recordsOutput');
 
-    function setStatus(el,text,cls){el.textContent=text;el.className="status"+(cls?" "+cls:"")}
-    function log(text){const time=new Date().toLocaleTimeString();terminal.textContent+=`[${time}] ${text}\n`;terminal.scrollTop=terminal.scrollHeight}
-    function appendSerial(text){terminal.textContent+=text;terminal.scrollTop=terminal.scrollHeight;serialBuffer+=text;if(serialBuffer.length>4000)serialBuffer=serialBuffer.slice(-4000);parseRakOutput(serialBuffer)}
-    function parseRakOutput(buffer){if(buffer.includes("+EVT:JOINED")||buffer.includes("AT+NJS=1"))setStatus(joinStatus,"JOINED","ok");else if(buffer.includes("JOIN_FAILED")||buffer.includes("AT+NJS=0"))setStatus(joinStatus,"NO JOIN","warn");if(buffer.includes("RX_TIMEOUT"))setStatus(joinStatus,"RX TIMEOUT","bad")}
+    function setStatus(el,text,cls){el.textContent=text;el.className='status'+(cls?' '+cls:'')}
+    function log(text){terminal.textContent+='['+new Date().toLocaleTimeString()+'] '+text+'\n';terminal.scrollTop=terminal.scrollHeight}
+    function appendSerial(text){terminal.textContent+=text;terminal.scrollTop=terminal.scrollHeight;serialBuffer+=text;if(serialBuffer.length>5000)serialBuffer=serialBuffer.slice(-5000);parseRakOutput(serialBuffer)}
+    function parseRakOutput(buffer){if(buffer.includes('+EVT:JOINED')||buffer.includes('AT+NJS=1'))setStatus(joinStatus,'JOINED','ok');else if(buffer.includes('JOIN_FAILED')||buffer.includes('AT+NJS=0'))setStatus(joinStatus,'NO JOIN','warn');if(buffer.includes('RX_TIMEOUT'))setStatus(joinStatus,'RX TIMEOUT','bad')}
 
-    async function getWebUsbSerial(){if(webUsbSerial)return webUsbSerial;log("Cargando polyfill WebUSB serial...");const module=await import("https://cdn.jsdelivr.net/npm/web-serial-polyfill@1.0.15/dist/serial.js");webUsbSerial=module.serial;return webUsbSerial}
+    async function getWebUsbSerial(){if(webUsbSerial)return webUsbSerial;log('Cargando polyfill WebUSB serial...');const module=await import('https://cdn.jsdelivr.net/npm/web-serial-polyfill@1.0.15/dist/serial.js');webUsbSerial=module.serial;return webUsbSerial}
+    function checkSupport(){const notes=[];notes.push(('serial' in navigator)?'Web Serial disponible.':'Web Serial no disponible.');notes.push(('usb' in navigator)?'WebUSB disponible.':'WebUSB no disponible.');notes.push(('geolocation' in navigator)?'GPS disponible.':'GPS no disponible.');if(!window.isSecureContext)notes.push('Advertencia: no HTTPS/contexto seguro.');supportNote.textContent=notes.join(' ');log(notes.join(' '))}
 
-    function checkSupport(){const notes=[];notes.push(("serial" in navigator)?"Web Serial nativo disponible.":"Web Serial nativo no disponible.");notes.push(("usb" in navigator)?"WebUSB disponible para fallback.":"WebUSB no disponible; el fallback no funcionará.");if("geolocation" in navigator)notes.push("GPS disponible.");else{setStatus(gpsStatus,"No soportado","bad");notes.push("Geolocation no disponible.")}if(!window.isSecureContext)notes.push("Advertencia: la página no está en HTTPS/contexto seguro.");supportNote.textContent=notes.join(" ");log(notes.join(" "))}
+    async function connectWithNativeSerial(){if(!('serial' in navigator)){alert('Este navegador no soporta Web Serial. En Android usa WebUSB.');return}await connectUsingSerialLike(navigator.serial,'Web Serial nativo')}
+    async function connectWithWebUsbFallback(){if(!('usb' in navigator)){alert('Este navegador no soporta WebUSB.');return}try{const serial=await getWebUsbSerial();await connectUsingSerialLike(serial,'WebUSB Android')}catch(error){setStatus(serialStatus,'Error','bad');log('ERROR WebUSB: '+(error?.message||String(error)))}}
+    async function connectUsingSerialLike(serialLike,backendName){try{await disconnectSerial({silent:true});port=await serialLike.requestPort({});await port.open({baudRate:115200,baudrate:115200,dataBits:8,databits:8,stopBits:1,stopbits:1,parity:'none',flowControl:'none',rtscts:false,bufferSize:8192});setStatus(serialStatus,'Conectado','ok');setStatus(backendStatus,backendName,'ok');log('Serial conectado con '+backendName+' a 115200 8N1.')}catch(error){setStatus(serialStatus,'Error','bad');setStatus(backendStatus,backendName,'warn');log('ERROR conectando con '+backendName+': '+(error?.message||String(error)))}}
 
-    async function connectWithNativeSerial(){if(!("serial" in navigator)){alert("Este navegador no soporta Web Serial nativo. Prueba WebUSB fallback.");return}await connectUsingSerialLike(navigator.serial,"Web Serial nativo")}
-    async function connectWithWebUsbFallback(){if(!("usb" in navigator)){alert("Este navegador no soporta WebUSB. No se puede usar el fallback.");return}try{const serial=await getWebUsbSerial();await connectUsingSerialLike(serial,"WebUSB fallback CDC-ACM")}catch(error){setStatus(serialStatus,"Error","bad");log("ERROR cargando/usando WebUSB fallback: "+(error?.message||String(error)))}}
+    async function readResponseWindow(timeoutMs){if(!port||!port.readable)return '';let output='';const deadline=Date.now()+timeoutMs;while(Date.now()<deadline){let reader=null;try{reader=port.readable.getReader();const result=await Promise.race([reader.read(),new Promise(resolve=>setTimeout(()=>resolve({timeout:true}),250))]);if(result.timeout){try{reader.releaseLock()}catch{};continue}if(result.value)output+=decoder.decode(result.value,{stream:true});try{reader.releaseLock()}catch{};if(output.includes('OK')||output.includes('ERROR')||output.includes('+EVT:JOINED')||output.includes('JOIN_FAILED')){if(timeoutMs<=5000)break}}catch(error){try{reader?.releaseLock()}catch{};break}}return output}
+    async function sendCommand(command,waitMs=3000){try{if(!port||!port.writable){alert('Primero conecta el puerto serial.');return}const cleanCommand=command.trim();if(!cleanCommand)return;log('>> '+cleanCommand);const writer=port.writable.getWriter();await writer.write(encoder.encode(cleanCommand+'\r\n'));writer.releaseLock();const response=await readResponseWindow(waitMs);if(response)appendSerial(response);else log('Sin respuesta visible en '+waitMs+' ms. El comando pudo haberse enviado.')}catch(error){log('ERROR enviando comando: '+(error?.message||String(error)))}}
+    async function quickCommand(command,waitMs){commandInput.value=command;await sendCommand(command,waitMs)}
 
-    async function connectUsingSerialLike(serialLike,backendName){try{await disconnectSerial({silent:true});port=await serialLike.requestPort();await port.open({baudRate:115200,dataBits:8,stopBits:1,parity:"none",flowControl:"none"});writer=port.writable.getWriter();reader=port.readable.getReader();keepReading=true;setStatus(serialStatus,"Conectado","ok");setStatus(backendStatus,backendName,"ok");log(`Serial conectado con ${backendName} a 115200 8N1. Lectura directa activada.`);readLoop()}catch(error){setStatus(serialStatus,"Error","bad");setStatus(backendStatus,backendName,"warn");log(`ERROR conectando con ${backendName}: ${error?.message||String(error)}`)}}
+    function readGPS(){return new Promise((resolve,reject)=>{if(!('geolocation' in navigator)){const error=new Error('Este navegador no soporta geolocalización.');alert(error.message);reject(error);return}setStatus(gpsStatus,'Leyendo...','warn');navigator.geolocation.getCurrentPosition(position=>{latestGps={timestamp:new Date(position.timestamp).toISOString(),latitude:position.coords.latitude,longitude:position.coords.longitude,accuracy_m:position.coords.accuracy,altitude:position.coords.altitude,altitude_accuracy:position.coords.altitudeAccuracy,speed:position.coords.speed,heading:position.coords.heading};setStatus(gpsStatus,'OK ±'+Math.round(latestGps.accuracy_m)+' m','ok');gpsOutput.textContent=JSON.stringify(latestGps,null,2);log('GPS leído: '+latestGps.latitude+', '+latestGps.longitude+' ±'+latestGps.accuracy_m+' m');resolve(latestGps)},error=>{setStatus(gpsStatus,'Error','bad');log('ERROR GPS: '+error.message);reject(error)},{enableHighAccuracy:true,timeout:15000,maximumAge:0})})}
+    function toHexByte(number){const n=Math.max(0,Math.min(255,Number(number)||0));return n.toString(16).padStart(2,'0').toUpperCase()}
+    async function sendCurrentPoint(){const point=Number(pointInput.value)||1,payload=toHexByte(point),gps=latestGps||await readGPS().catch(()=>null),command='AT+SEND=2:'+payload;await sendCommand(command,5000);const record={point,payload_hex:payload,command,phone_timestamp:new Date().toISOString(),gps,note:noteInput.value.trim()};records.push(record);recordsOutput.textContent=JSON.stringify(records,null,2);localStorage.setItem('loraFieldLinkRecords',JSON.stringify(records));pointInput.value=String(point+1);log('Registro local guardado para punto '+point+', payload '+payload+'.')}
+    function loadRecords(){try{records=JSON.parse(localStorage.getItem('loraFieldLinkRecords')||'[]');recordsOutput.textContent=JSON.stringify(records,null,2)}catch{records=[]}}
+    function exportRecords(){const blob=new Blob([JSON.stringify(records,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='lorafieldlink-'+new Date().toISOString().replace(/[:.]/g,'-')+'.json';document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url)}
 
-    async function readLoop(){while(keepReading&&reader){try{const {value,done}=await reader.read();if(done){log("Lectura serial finalizada por el navegador.");break}if(value){if(typeof value==="string")appendSerial(value);else appendSerial(decoder.decode(value,{stream:true}))}}catch(error){log("Lectura serial detenida: "+(error?.message||String(error)||"error sin detalle"));log("La escritura puede seguir activa. Si no recibes OK, desconecta y conecta otra vez.");break}}}
-
-    async function disconnectSerial(options={}){try{keepReading=false;if(reader){try{await reader.cancel()}catch{}try{reader.releaseLock()}catch{}reader=null}if(writer){try{writer.releaseLock()}catch{}writer=null}if(port){try{await port.close()}catch{}port=null}if(!options.silent){setStatus(serialStatus,"Desconectado","warn");setStatus(backendStatus,"Ninguno","warn");log("Serial desconectado.")}}catch(error){log("ERROR desconectando: "+(error?.message||String(error)))}}
-
-    async function sendCommand(command){try{if(!writer){alert("Primero conecta el puerto serial.");return}const cleanCommand=command.trim();if(!cleanCommand)return;log(">> "+cleanCommand);await writer.write(encoder.encode(cleanCommand+"\r\n"));return cleanCommand}catch(error){log("ERROR enviando comando: "+(error?.message||String(error)))}}
-    async function quickCommand(command){commandInput.value=command;await sendCommand(command)}
-
-    function readGPS(){return new Promise((resolve,reject)=>{if(!("geolocation" in navigator)){const error=new Error("Este navegador no soporta geolocalización.");alert(error.message);reject(error);return}setStatus(gpsStatus,"Leyendo...","warn");navigator.geolocation.getCurrentPosition(position=>{latestGps={timestamp:new Date(position.timestamp).toISOString(),latitude:position.coords.latitude,longitude:position.coords.longitude,accuracy_m:position.coords.accuracy,altitude:position.coords.altitude,altitude_accuracy:position.coords.altitudeAccuracy,speed:position.coords.speed,heading:position.coords.heading};setStatus(gpsStatus,`OK ±${Math.round(latestGps.accuracy_m)} m`,"ok");gpsOutput.textContent=JSON.stringify(latestGps,null,2);log(`GPS leído: ${latestGps.latitude}, ${latestGps.longitude} ±${latestGps.accuracy_m} m`);resolve(latestGps)},error=>{setStatus(gpsStatus,"Error","bad");log("ERROR GPS: "+error.message);reject(error)},{enableHighAccuracy:true,timeout:15000,maximumAge:0})})}
-    function toHexByte(number){const n=Math.max(0,Math.min(255,Number(number)||0));return n.toString(16).padStart(2,"0").toUpperCase()}
-    async function sendCurrentPoint(){const point=Number(pointInput.value)||1,payload=toHexByte(point),gps=latestGps||await readGPS().catch(()=>null),command=`AT+SEND=2:${payload}`,sentCommand=await sendCommand(command);if(!sentCommand)return;const record={point,payload_hex:payload,command,phone_timestamp:new Date().toISOString(),gps,note:noteInput.value.trim()};records.push(record);recordsOutput.textContent=JSON.stringify(records,null,2);localStorage.setItem("loraFieldLinkRecords",JSON.stringify(records));pointInput.value=String(point+1);log(`Registro local guardado para punto ${point}, payload ${payload}.`)}
-    function loadRecords(){try{records=JSON.parse(localStorage.getItem("loraFieldLinkRecords")||"[]");recordsOutput.textContent=JSON.stringify(records,null,2)}catch{records=[]}}
-    function exportRecords(){const blob=new Blob([JSON.stringify(records,null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=`lorafieldlink-${new Date().toISOString().replace(/[:.]/g,"-")}.json`;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url)}
-
-    document.getElementById("connectNativeBtn").addEventListener("click",connectWithNativeSerial);
-    document.getElementById("connectWebUsbBtn").addEventListener("click",connectWithWebUsbFallback);
-    document.getElementById("disconnectBtn").addEventListener("click",()=>disconnectSerial());
-    document.getElementById("sendBtn").addEventListener("click",()=>sendCommand(commandInput.value));
-    document.getElementById("gpsBtn").addEventListener("click",()=>readGPS());
-    document.getElementById("sendPointBtn").addEventListener("click",sendCurrentPoint);
-    document.getElementById("exportBtn").addEventListener("click",exportRecords);
-    document.querySelectorAll("button[data-cmd]").forEach(button=>button.addEventListener("click",()=>quickCommand(button.dataset.cmd)));
+    document.getElementById('connectNativeBtn').addEventListener('click',connectWithNativeSerial);
+    document.getElementById('connectWebUsbBtn').addEventListener('click',connectWithWebUsbFallback);
+    document.getElementById('disconnectBtn').addEventListener('click',()=>disconnectSerial());
+    document.getElementById('sendBtn').addEventListener('click',()=>sendCommand(commandInput.value,3000));
+    document.getElementById('gpsBtn').addEventListener('click',()=>readGPS());
+    document.getElementById('sendPointBtn').addEventListener('click',sendCurrentPoint);
+    document.getElementById('exportBtn').addEventListener('click',exportRecords);
+    document.querySelectorAll('button[data-cmd]').forEach(button=>button.addEventListener('click',()=>quickCommand(button.dataset.cmd,Number(button.dataset.wait)||3000)));
+    async function disconnectSerial(options={}){try{if(port){try{await port.close()}catch{}port=null}if(!options.silent){setStatus(serialStatus,'Desconectado','warn');setStatus(backendStatus,'Ninguno','warn');log('Serial desconectado.')}}catch(error){log('ERROR desconectando: '+(error?.message||String(error)))}}
     loadRecords();checkSupport();
   </script>
 </body>

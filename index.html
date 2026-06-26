@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0f172a" />
+  <title>LoRaFieldLink</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0f172a;
+      --panel: #111827;
+      --panel-2: #020617;
+      --line: #334155;
+      --text: #e5e7eb;
+      --muted: #94a3b8;
+      --primary: #2563eb;
+      --primary-2: #1d4ed8;
+      --danger: #dc2626;
+      --ok: #22c55e;
+      --warn: #f59e0b;
+      --info: #38bdf8;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 16px;
+      background: radial-gradient(circle at top, #1e293b 0, var(--bg) 36rem);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    main {
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      margin: 0 0 4px;
+      font-size: 1.7rem;
+      letter-spacing: -0.03em;
+    }
+
+    h2 {
+      margin: 0 0 10px;
+      font-size: 1.05rem;
+    }
+
+    p { margin: 6px 0; }
+
+    .subtitle {
+      color: var(--muted);
+      margin-bottom: 16px;
+      font-size: 0.95rem;
+    }
+
+    .card {
+      background: color-mix(in srgb, var(--panel) 94%, white 6%);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+      margin-bottom: 14px;
+      box-shadow: 0 12px 28px rgb(0 0 0 / 0.18);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    button, input, textarea {
+      font: inherit;
+    }
+
+    button {
+      width: 100%;
+      min-height: 44px;
+      padding: 11px 12px;
+      border: 0;
+      border-radius: 12px;
+      background: var(--primary);
+      color: white;
+      font-weight: 700;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    button:active { transform: translateY(1px); }
+    button:hover { background: var(--primary-2); }
+    button.secondary { background: #475569; }
+    button.danger { background: var(--danger); }
+    button.success { background: #16a34a; }
+    button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    input, textarea {
+      width: 100%;
+      margin: 6px 0 8px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--panel-2);
+      color: var(--text);
+      outline: none;
+    }
+
+    textarea {
+      min-height: 70px;
+      resize: vertical;
+    }
+
+    pre {
+      margin: 0;
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      min-height: 120px;
+      max-height: 340px;
+      overflow-y: auto;
+      font-size: 0.88rem;
+      line-height: 1.35;
+    }
+
+    .status-row {
+      display: grid;
+      grid-template-columns: 92px 1fr;
+      gap: 8px;
+      align-items: baseline;
+      margin: 4px 0;
+    }
+
+    .label { color: var(--muted); }
+    .status { font-weight: 800; color: var(--info); }
+    .ok { color: var(--ok); }
+    .warn { color: var(--warn); }
+    .bad { color: #f87171; }
+    .small { color: var(--muted); font-size: 0.88rem; }
+
+    .record {
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    @media (max-width: 560px) {
+      body { padding: 12px; }
+      .grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>LoRaFieldLink</h1>
+    <p class="subtitle">Prueba mínima de campo: Web Serial + GPS + ESP32-C3 + RAK3272.</p>
+
+    <section class="card">
+      <h2>Estado</h2>
+      <div class="status-row"><span class="label">Serial</span><span id="serialStatus" class="status">No conectado</span></div>
+      <div class="status-row"><span class="label">GPS</span><span id="gpsStatus" class="status">Sin lectura</span></div>
+      <div class="status-row"><span class="label">JOIN</span><span id="joinStatus" class="status">Desconocido</span></div>
+      <p id="supportNote" class="small"></p>
+    </section>
+
+    <section class="card">
+      <h2>Serial USB</h2>
+      <div class="grid">
+        <button id="connectBtn">Conectar serial</button>
+        <button id="disconnectBtn" class="danger">Desconectar</button>
+      </div>
+      <input id="commandInput" value="AT" autocapitalize="off" autocomplete="off" spellcheck="false" />
+      <button id="sendBtn">Enviar comando</button>
+      <div class="grid">
+        <button class="secondary" data-cmd="AT">AT</button>
+        <button class="secondary" data-cmd="AT+NJS=?">Estado JOIN</button>
+        <button class="secondary" data-cmd="AT+JOIN">JOIN</button>
+        <button class="success" data-cmd="AT+SEND=2:01">SEND 01</button>
+      </div>
+      <p class="small">La app envía CR+LF al final de cada comando, equivalente a “Both NL & CR”.</p>
+    </section>
+
+    <section class="card">
+      <h2>GPS del celular</h2>
+      <button id="gpsBtn">Leer GPS</button>
+      <pre id="gpsOutput">Sin datos GPS todavía.</pre>
+    </section>
+
+    <section class="card">
+      <h2>Registro rápido</h2>
+      <div class="grid">
+        <input id="pointInput" type="number" min="1" value="1" aria-label="Punto" />
+        <button id="sendPointBtn" class="success">Enviar punto actual</button>
+      </div>
+      <textarea id="noteInput" placeholder="Nota opcional: exterior, ventana, sin línea de vista, etc."></textarea>
+      <button id="exportBtn" class="secondary">Exportar registros JSON</button>
+      <pre id="recordsOutput">[]</pre>
+    </section>
+
+    <section class="card">
+      <h2>Consola</h2>
+      <pre id="terminal"></pre>
+    </section>
+  </main>
+
+  <script>
+    let port = null;
+    let reader = null;
+    let writer = null;
+    let keepReading = false;
+    let latestGps = null;
+    let records = [];
+    let serialBuffer = "";
+
+    const serialStatus = document.getElementById("serialStatus");
+    const gpsStatus = document.getElementById("gpsStatus");
+    const joinStatus = document.getElementById("joinStatus");
+    const supportNote = document.getElementById("supportNote");
+    const terminal = document.getElementById("terminal");
+    const gpsOutput = document.getElementById("gpsOutput");
+    const commandInput = document.getElementById("commandInput");
+    const pointInput = document.getElementById("pointInput");
+    const noteInput = document.getElementById("noteInput");
+    const recordsOutput = document.getElementById("recordsOutput");
+
+    function setStatus(element, text, cls) {
+      element.textContent = text;
+      element.className = "status" + (cls ? " " + cls : "");
+    }
+
+    function log(text) {
+      const time = new Date().toLocaleTimeString();
+      terminal.textContent += `[${time}] ${text}\n`;
+      terminal.scrollTop = terminal.scrollHeight;
+    }
+
+    function appendSerial(text) {
+      terminal.textContent += text;
+      terminal.scrollTop = terminal.scrollHeight;
+      serialBuffer += text;
+      if (serialBuffer.length > 4000) serialBuffer = serialBuffer.slice(-4000);
+      parseRakOutput(serialBuffer);
+    }
+
+    function parseRakOutput(buffer) {
+      if (buffer.includes("+EVT:JOINED") || buffer.includes("AT+NJS=1")) {
+        setStatus(joinStatus, "JOINED", "ok");
+      } else if (buffer.includes("JOIN_FAILED") || buffer.includes("AT+NJS=0")) {
+        setStatus(joinStatus, "NO JOIN", "warn");
+      }
+
+      if (buffer.includes("RX_TIMEOUT")) {
+        setStatus(joinStatus, "RX TIMEOUT", "bad");
+      }
+    }
+
+    function checkSupport() {
+      const notes = [];
+      if (!("serial" in navigator)) {
+        setStatus(serialStatus, "Web Serial no soportado", "bad");
+        notes.push("Este navegador no expone navigator.serial. Prueba Chrome actualizado en Android.");
+      } else {
+        notes.push("Web Serial disponible.");
+      }
+
+      if (!("geolocation" in navigator)) {
+        setStatus(gpsStatus, "No soportado", "bad");
+        notes.push("Geolocation no disponible en este navegador.");
+      } else {
+        notes.push("Geolocation disponible.");
+      }
+
+      if (!window.isSecureContext) {
+        notes.push("Advertencia: la página no está en contexto seguro HTTPS.");
+      }
+
+      supportNote.textContent = notes.join(" ");
+      log(notes.join(" "));
+    }
+
+    async function connectSerial() {
+      try {
+        if (!("serial" in navigator)) {
+          alert("Este navegador no soporta Web Serial.");
+          return;
+        }
+
+        port = await navigator.serial.requestPort();
+        await port.open({
+          baudRate: 115200,
+          dataBits: 8,
+          stopBits: 1,
+          parity: "none",
+          flowControl: "none"
+        });
+
+        const encoder = new TextEncoderStream();
+        encoder.readable.pipeTo(port.writable);
+        writer = encoder.writable.getWriter();
+
+        const decoder = new TextDecoderStream();
+        port.readable.pipeTo(decoder.writable);
+        reader = decoder.readable.getReader();
+
+        keepReading = true;
+        setStatus(serialStatus, "Conectado", "ok");
+        log("Serial conectado a 115200 8N1.");
+        readLoop();
+      } catch (error) {
+        setStatus(serialStatus, "Error", "bad");
+        log("ERROR conectando serial: " + error.message);
+      }
+    }
+
+    async function readLoop() {
+      try {
+        while (keepReading && reader) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          if (value) appendSerial(value);
+        }
+      } catch (error) {
+        log("ERROR leyendo serial: " + error.message);
+      }
+    }
+
+    async function disconnectSerial() {
+      try {
+        keepReading = false;
+        if (reader) {
+          await reader.cancel().catch(() => {});
+          reader.releaseLock();
+          reader = null;
+        }
+        if (writer) {
+          writer.releaseLock();
+          writer = null;
+        }
+        if (port) {
+          await port.close();
+          port = null;
+        }
+        setStatus(serialStatus, "Desconectado", "warn");
+        log("Serial desconectado.");
+      } catch (error) {
+        log("ERROR desconectando: " + error.message);
+      }
+    }
+
+    async function sendCommand(command) {
+      try {
+        if (!writer) {
+          alert("Primero conecta el puerto serial.");
+          return;
+        }
+        const cleanCommand = command.trim();
+        if (!cleanCommand) return;
+        log(">> " + cleanCommand);
+        await writer.write(cleanCommand + "\r\n");
+        return cleanCommand;
+      } catch (error) {
+        log("ERROR enviando comando: " + error.message);
+      }
+    }
+
+    async function quickCommand(command) {
+      commandInput.value = command;
+      await sendCommand(command);
+    }
+
+    function readGPS() {
+      return new Promise((resolve, reject) => {
+        if (!("geolocation" in navigator)) {
+          const error = new Error("Este navegador no soporta geolocalización.");
+          alert(error.message);
+          reject(error);
+          return;
+        }
+
+        setStatus(gpsStatus, "Leyendo...", "warn");
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            latestGps = {
+              timestamp: new Date(position.timestamp).toISOString(),
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+              accuracy_m: position.coords.accuracy,
+              altitude: position.coords.altitude,
+              altitude_accuracy: position.coords.altitudeAccuracy,
+              speed: position.coords.speed,
+              heading: position.coords.heading
+            };
+            setStatus(gpsStatus, `OK ±${Math.round(latestGps.accuracy_m)} m`, "ok");
+            gpsOutput.textContent = JSON.stringify(latestGps, null, 2);
+            log(`GPS leído: ${latestGps.latitude}, ${latestGps.longitude} ±${latestGps.accuracy_m} m`);
+            resolve(latestGps);
+          },
+          (error) => {
+            setStatus(gpsStatus, "Error", "bad");
+            log("ERROR GPS: " + error.message);
+            reject(error);
+          },
+          { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+        );
+      });
+    }
+
+    function toHexByte(number) {
+      const n = Math.max(0, Math.min(255, Number(number) || 0));
+      return n.toString(16).padStart(2, "0").toUpperCase();
+    }
+
+    async function sendCurrentPoint() {
+      const point = Number(pointInput.value) || 1;
+      const payload = toHexByte(point);
+      const gps = latestGps || await readGPS().catch(() => null);
+      const command = `AT+SEND=2:${payload}`;
+      const sentCommand = await sendCommand(command);
+      if (!sentCommand) return;
+
+      const record = {
+        point,
+        payload_hex: payload,
+        command,
+        phone_timestamp: new Date().toISOString(),
+        gps,
+        note: noteInput.value.trim()
+      };
+      records.push(record);
+      recordsOutput.textContent = JSON.stringify(records, null, 2);
+      localStorage.setItem("loraFieldLinkRecords", JSON.stringify(records));
+      pointInput.value = String(point + 1);
+      log(`Registro local guardado para punto ${point}, payload ${payload}.`);
+    }
+
+    function loadRecords() {
+      try {
+        records = JSON.parse(localStorage.getItem("loraFieldLinkRecords") || "[]");
+        recordsOutput.textContent = JSON.stringify(records, null, 2);
+      } catch {
+        records = [];
+      }
+    }
+
+    function exportRecords() {
+      const blob = new Blob([JSON.stringify(records, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `lorafieldlink-${new Date().toISOString().replace(/[:.]/g, "-")}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    document.getElementById("connectBtn").addEventListener("click", connectSerial);
+    document.getElementById("disconnectBtn").addEventListener("click", disconnectSerial);
+    document.getElementById("sendBtn").addEventListener("click", () => sendCommand(commandInput.value));
+    document.getElementById("gpsBtn").addEventListener("click", () => readGPS());
+    document.getElementById("sendPointBtn").addEventListener("click", sendCurrentPoint);
+    document.getElementById("exportBtn").addEventListener("click", exportRecords);
+    document.querySelectorAll("button[data-cmd]").forEach((button) => {
+      button.addEventListener("click", () => quickCommand(button.dataset.cmd));
+    });
+
+    loadRecords();
+    checkSupport();
+  </script>
+</body>
+</html>

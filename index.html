@@ -32,32 +32,14 @@
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
 
-    main {
-      max-width: 720px;
-      margin: 0 auto;
-    }
-
-    h1 {
-      margin: 0 0 4px;
-      font-size: 1.7rem;
-      letter-spacing: -0.03em;
-    }
-
-    h2 {
-      margin: 0 0 10px;
-      font-size: 1.05rem;
-    }
-
+    main { max-width: 720px; margin: 0 auto; }
+    h1 { margin: 0 0 4px; font-size: 1.7rem; letter-spacing: -0.03em; }
+    h2 { margin: 0 0 10px; font-size: 1.05rem; }
     p { margin: 6px 0; }
-
-    .subtitle {
-      color: var(--muted);
-      margin-bottom: 16px;
-      font-size: 0.95rem;
-    }
+    .subtitle { color: var(--muted); margin-bottom: 16px; font-size: 0.95rem; }
 
     .card {
-      background: color-mix(in srgb, var(--panel) 94%, white 6%);
+      background: #111827;
       border: 1px solid var(--line);
       border-radius: 16px;
       padding: 14px;
@@ -65,15 +47,8 @@
       box-shadow: 0 12px 28px rgb(0 0 0 / 0.18);
     }
 
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 8px;
-    }
-
-    button, input, textarea {
-      font: inherit;
-    }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    button, input, textarea { font: inherit; }
 
     button {
       width: 100%;
@@ -93,10 +68,8 @@
     button.secondary { background: #475569; }
     button.danger { background: var(--danger); }
     button.success { background: #16a34a; }
-    button:disabled {
-      opacity: 0.45;
-      cursor: not-allowed;
-    }
+    button.warning { background: #d97706; }
+    button:disabled { opacity: 0.45; cursor: not-allowed; }
 
     input, textarea {
       width: 100%;
@@ -109,10 +82,7 @@
       outline: none;
     }
 
-    textarea {
-      min-height: 70px;
-      resize: vertical;
-    }
+    textarea { min-height: 70px; resize: vertical; }
 
     pre {
       margin: 0;
@@ -129,26 +99,13 @@
       line-height: 1.35;
     }
 
-    .status-row {
-      display: grid;
-      grid-template-columns: 92px 1fr;
-      gap: 8px;
-      align-items: baseline;
-      margin: 4px 0;
-    }
-
+    .status-row { display: grid; grid-template-columns: 92px 1fr; gap: 8px; align-items: baseline; margin: 4px 0; }
     .label { color: var(--muted); }
     .status { font-weight: 800; color: var(--info); }
     .ok { color: var(--ok); }
     .warn { color: var(--warn); }
     .bad { color: #f87171; }
     .small { color: var(--muted); font-size: 0.88rem; }
-
-    .record {
-      display: grid;
-      gap: 8px;
-      margin-top: 10px;
-    }
 
     @media (max-width: 560px) {
       body { padding: 12px; }
@@ -159,11 +116,12 @@
 <body>
   <main>
     <h1>LoRaFieldLink</h1>
-    <p class="subtitle">Prueba mínima de campo: Web Serial + GPS + ESP32-C3 + RAK3272.</p>
+    <p class="subtitle">Prueba mínima de campo: Web Serial / WebUSB fallback + GPS + ESP32-C3 + RAK3272.</p>
 
     <section class="card">
       <h2>Estado</h2>
       <div class="status-row"><span class="label">Serial</span><span id="serialStatus" class="status">No conectado</span></div>
+      <div class="status-row"><span class="label">Modo</span><span id="backendStatus" class="status">Ninguno</span></div>
       <div class="status-row"><span class="label">GPS</span><span id="gpsStatus" class="status">Sin lectura</span></div>
       <div class="status-row"><span class="label">JOIN</span><span id="joinStatus" class="status">Desconocido</span></div>
       <p id="supportNote" class="small"></p>
@@ -172,9 +130,10 @@
     <section class="card">
       <h2>Serial USB</h2>
       <div class="grid">
-        <button id="connectBtn">Conectar serial</button>
-        <button id="disconnectBtn" class="danger">Desconectar</button>
+        <button id="connectNativeBtn">Conectar Web Serial</button>
+        <button id="connectWebUsbBtn" class="warning">Conectar WebUSB fallback</button>
       </div>
+      <button id="disconnectBtn" class="danger">Desconectar</button>
       <input id="commandInput" value="AT" autocapitalize="off" autocomplete="off" spellcheck="false" />
       <button id="sendBtn">Enviar comando</button>
       <div class="grid">
@@ -183,7 +142,7 @@
         <button class="secondary" data-cmd="AT+JOIN">JOIN</button>
         <button class="success" data-cmd="AT+SEND=2:01">SEND 01</button>
       </div>
-      <p class="small">La app envía CR+LF al final de cada comando, equivalente a “Both NL & CR”.</p>
+      <p class="small">Primero intenta Web Serial. Si aparece “No se encontraron dispositivos compatibles”, prueba WebUSB fallback.</p>
     </section>
 
     <section class="card">
@@ -209,7 +168,7 @@
     </section>
   </main>
 
-  <script>
+  <script type="module">
     let port = null;
     let reader = null;
     let writer = null;
@@ -217,8 +176,10 @@
     let latestGps = null;
     let records = [];
     let serialBuffer = "";
+    let webUsbSerial = null;
 
     const serialStatus = document.getElementById("serialStatus");
+    const backendStatus = document.getElementById("backendStatus");
     const gpsStatus = document.getElementById("gpsStatus");
     const joinStatus = document.getElementById("joinStatus");
     const supportNote = document.getElementById("supportNote");
@@ -254,44 +215,74 @@
       } else if (buffer.includes("JOIN_FAILED") || buffer.includes("AT+NJS=0")) {
         setStatus(joinStatus, "NO JOIN", "warn");
       }
-
       if (buffer.includes("RX_TIMEOUT")) {
         setStatus(joinStatus, "RX TIMEOUT", "bad");
       }
     }
 
+    async function getWebUsbSerial() {
+      if (webUsbSerial) return webUsbSerial;
+      log("Cargando polyfill WebUSB serial...");
+      const module = await import("https://cdn.jsdelivr.net/npm/web-serial-polyfill@1.0.15/dist/serial.js");
+      webUsbSerial = module.serial;
+      return webUsbSerial;
+    }
+
     function checkSupport() {
       const notes = [];
-      if (!("serial" in navigator)) {
-        setStatus(serialStatus, "Web Serial no soportado", "bad");
-        notes.push("Este navegador no expone navigator.serial. Prueba Chrome actualizado en Android.");
+      if ("serial" in navigator) {
+        notes.push("Web Serial nativo disponible.");
       } else {
-        notes.push("Web Serial disponible.");
+        notes.push("Web Serial nativo no disponible.");
       }
 
-      if (!("geolocation" in navigator)) {
-        setStatus(gpsStatus, "No soportado", "bad");
-        notes.push("Geolocation no disponible en este navegador.");
+      if ("usb" in navigator) {
+        notes.push("WebUSB disponible para fallback.");
       } else {
-        notes.push("Geolocation disponible.");
+        notes.push("WebUSB no disponible; el fallback no funcionará.");
+      }
+
+      if ("geolocation" in navigator) {
+        notes.push("GPS disponible.");
+      } else {
+        setStatus(gpsStatus, "No soportado", "bad");
+        notes.push("Geolocation no disponible.");
       }
 
       if (!window.isSecureContext) {
-        notes.push("Advertencia: la página no está en contexto seguro HTTPS.");
+        notes.push("Advertencia: la página no está en HTTPS/contexto seguro.");
       }
 
       supportNote.textContent = notes.join(" ");
       log(notes.join(" "));
     }
 
-    async function connectSerial() {
-      try {
-        if (!("serial" in navigator)) {
-          alert("Este navegador no soporta Web Serial.");
-          return;
-        }
+    async function connectWithNativeSerial() {
+      if (!("serial" in navigator)) {
+        alert("Este navegador no soporta Web Serial nativo. Prueba WebUSB fallback.");
+        return;
+      }
+      await connectUsingSerialLike(navigator.serial, "Web Serial nativo");
+    }
 
-        port = await navigator.serial.requestPort();
+    async function connectWithWebUsbFallback() {
+      if (!("usb" in navigator)) {
+        alert("Este navegador no soporta WebUSB. No se puede usar el fallback.");
+        return;
+      }
+      try {
+        const serial = await getWebUsbSerial();
+        await connectUsingSerialLike(serial, "WebUSB fallback CDC-ACM");
+      } catch (error) {
+        setStatus(serialStatus, "Error", "bad");
+        log("ERROR cargando/usando WebUSB fallback: " + error.message);
+      }
+    }
+
+    async function connectUsingSerialLike(serialLike, backendName) {
+      try {
+        await disconnectSerial({ silent: true });
+        port = await serialLike.requestPort();
         await port.open({
           baudRate: 115200,
           dataBits: 8,
@@ -310,11 +301,13 @@
 
         keepReading = true;
         setStatus(serialStatus, "Conectado", "ok");
-        log("Serial conectado a 115200 8N1.");
+        setStatus(backendStatus, backendName, "ok");
+        log(`Serial conectado con ${backendName} a 115200 8N1.`);
         readLoop();
       } catch (error) {
         setStatus(serialStatus, "Error", "bad");
-        log("ERROR conectando serial: " + error.message);
+        setStatus(backendStatus, backendName, "warn");
+        log(`ERROR conectando con ${backendName}: ${error.message}`);
       }
     }
 
@@ -330,7 +323,7 @@
       }
     }
 
-    async function disconnectSerial() {
+    async function disconnectSerial(options = {}) {
       try {
         keepReading = false;
         if (reader) {
@@ -343,11 +336,14 @@
           writer = null;
         }
         if (port) {
-          await port.close();
+          await port.close().catch(() => {});
           port = null;
         }
-        setStatus(serialStatus, "Desconectado", "warn");
-        log("Serial desconectado.");
+        if (!options.silent) {
+          setStatus(serialStatus, "Desconectado", "warn");
+          setStatus(backendStatus, "Ninguno", "warn");
+          log("Serial desconectado.");
+        }
       } catch (error) {
         log("ERROR desconectando: " + error.message);
       }
@@ -460,8 +456,9 @@
       URL.revokeObjectURL(url);
     }
 
-    document.getElementById("connectBtn").addEventListener("click", connectSerial);
-    document.getElementById("disconnectBtn").addEventListener("click", disconnectSerial);
+    document.getElementById("connectNativeBtn").addEventListener("click", connectWithNativeSerial);
+    document.getElementById("connectWebUsbBtn").addEventListener("click", connectWithWebUsbFallback);
+    document.getElementById("disconnectBtn").addEventListener("click", () => disconnectSerial());
     document.getElementById("sendBtn").addEventListener("click", () => sendCommand(commandInput.value));
     document.getElementById("gpsBtn").addEventListener("click", () => readGPS());
     document.getElementById("sendPointBtn").addEventListener("click", sendCurrentPoint);

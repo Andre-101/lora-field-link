@@ -4,7 +4,7 @@
   Hardware confirmed:
   ESP32-C3 GPIO21 TX -> RAK UART2_RX / PA3
   ESP32-C3 GPIO20 RX <- RAK UART2_TX / PA2
-  ESP32-C3 GPIO7      -> RAK RST / PA12
+  ESP32-C3 GPIO3      -> RAK RST / PA12
   3.3V and GND shared. Do not power RAK with 5V.
 
   BLE protocol:
@@ -24,7 +24,7 @@
 
 #define RAK_RX_PIN 20
 #define RAK_TX_PIN 21
-#define RAK_RST_PIN 7
+#define RAK_RST_PIN 3
 #define RAK_BAUD 115200
 
 #define BLE_DEVICE_NAME "LoRaFieldLink-C3"
@@ -82,7 +82,7 @@ class RxCallbacks : public BLECharacteristicCallbacks {
 };
 
 static void resetRak() {
-  Serial.println("Reiniciando RAK...");
+  Serial.println("Reiniciando RAK por GPIO3...");
   pinMode(RAK_RST_PIN, OUTPUT);
   digitalWrite(RAK_RST_PIN, HIGH);
   delay(200);
@@ -133,6 +133,7 @@ void setup() {
   Serial.println(" USB Serial se mantiene para diagnostico");
   Serial.println(" BLE: LoRaFieldLink-C3");
   Serial.println(" UART RAK: RX GPIO20, TX GPIO21");
+  Serial.println(" RAK reset: GPIO3");
   Serial.println("=====================================");
 
   RakSerial.begin(RAK_BAUD, SERIAL_8N1, RAK_RX_PIN, RAK_TX_PIN);

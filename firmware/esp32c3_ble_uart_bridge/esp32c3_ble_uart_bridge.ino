@@ -5,7 +5,7 @@
   ESP32-C3 GPIO21 TX -> RAK UART2_RX / PA3
   ESP32-C3 GPIO20 RX <- RAK UART2_TX / PA2
   ESP32-C3 GPIO3      -> RAK RST / PA12
-  OLED I2C: SDA GPIO8, SCL GPIO9
+  OLED I2C validated: SDA GPIO5, SCL GPIO6
   3.3V and GND shared. Do not power RAK with 5V.
 
   Arduino IDE:
@@ -38,8 +38,8 @@
 #define RAK_RST_PIN 3
 #define RAK_BAUD 115200
 
-#define OLED_SDA_PIN 8
-#define OLED_SCL_PIN 9
+#define OLED_SDA_PIN 5
+#define OLED_SCL_PIN 6
 
 #define BLE_DEVICE_NAME "LoRaFieldLink-C3"
 
@@ -49,9 +49,6 @@
 #define NUS_TX_UUID      "6E400003-B5A3-F393-E0A9-E50E24DCCA9E" // ESP notifies central
 
 HardwareSerial RakSerial(1);
-
-// Common 0.42 in ESP32-C3 OLED board display: SSD1306 72x40 over I2C.
-// If your validation shows a different display, swap this constructor first.
 U8G2_SSD1306_72X40_ER_F_HW_I2C oled(U8G2_R0, U8X8_PIN_NONE);
 
 BLEServer *bleServer = nullptr;
@@ -79,17 +76,17 @@ static void drawStatus(const char *phase = nullptr) {
   oled.clearBuffer();
   oled.setFont(u8g2_font_5x8_tf);
 
-  oled.drawStr(0, 7, "LoRaFieldLink");
+  oled.drawStr(0, 7, "LoRaField");
   oled.drawHLine(0, 9, 72);
 
   char line[24];
-  snprintf(line, sizeof(line), "BLE:%s RAK:%s", bleConnected ? "OK" : "--", state.rakSeen ? "OK" : "--");
+  snprintf(line, sizeof(line), "B:%s R:%s", bleConnected ? "OK" : "--", state.rakSeen ? "OK" : "--");
   oled.drawStr(0, 18, line);
 
   const char *joinText = "?";
   if (state.joinState == 1) joinText = "YES";
   else if (state.joinState == 0) joinText = "NO";
-  snprintf(line, sizeof(line), "JOIN:%s TX:%lu", joinText, (unsigned long)state.txCount);
+  snprintf(line, sizeof(line), "J:%s TX:%lu", joinText, (unsigned long)state.txCount);
   oled.drawStr(0, 27, line);
 
   if (phase && phase[0]) {
@@ -124,12 +121,12 @@ static void parseRakLine(const String &line) {
   } else if (s.indexOf("JOIN_FAILED") >= 0 || s.indexOf("AT+NJS=0") >= 0) {
     state.joinState = 0;
     setResult("NO JOIN");
-  } else if (s.indexOf("OK") >= 0) {
-    setResult("OK");
-  } else if (s.indexOf("ERROR") >= 0 || s.indexOf("AT_" ) >= 0) {
+  } else if (s.indexOf("AT_PARAM_ERROR") >= 0 || s.indexOf("ERROR") >= 0) {
     setResult("ERROR");
   } else if (s.indexOf("RX_TIMEOUT") >= 0) {
     setResult("RX TIMEOUT");
+  } else if (s == "OK" || s.endsWith(" OK")) {
+    setResult("OK");
   }
 }
 
@@ -150,7 +147,6 @@ static void parseRakBytes(const uint8_t *data, size_t len) {
 static void bleNotifyChunk(const uint8_t *data, size_t len) {
   if (!bleConnected || txCharacteristic == nullptr || len == 0) return;
 
-  // Safe default for BLE ATT MTU 23 -> 20 payload bytes.
   const size_t chunkSize = 20;
   for (size_t i = 0; i < len; i += chunkSize) {
     size_t n = min(chunkSize, len - i);
@@ -218,9 +214,10 @@ static void setupOled() {
   Wire.begin(OLED_SDA_PIN, OLED_SCL_PIN);
   state.oledOk = oled.begin();
   if (state.oledOk) {
+    oled.setBusClock(400000);
     oled.setContrast(180);
     drawStatus("BOOT");
-    Serial.println("OLED listo: SSD1306 72x40 I2C");
+    Serial.println("OLED listo: SSD1306 72x40 I2C, SDA GPIO5, SCL GPIO6");
   } else {
     Serial.println("OLED no detectada. El firmware continua sin pantalla.");
   }
@@ -281,7 +278,7 @@ void setup() {
   Serial.println(" BLE: LoRaFieldLink-C3");
   Serial.println(" UART RAK: RX GPIO20, TX GPIO21");
   Serial.println(" RAK reset: GPIO3");
-  Serial.println(" OLED I2C: SDA GPIO8, SCL GPIO9");
+  Serial.println(" OLED I2C: SDA GPIO5, SCL GPIO6");
   Serial.println("=====================================");
 
   setupOled();
@@ -295,13 +292,11 @@ void setup() {
 }
 
 void loop() {
-  // USB Serial -> RAK, preserves the old workflow.
   while (Serial.available()) {
     char c = (char)Serial.read();
     RakSerial.write(c);
   }
 
-  // RAK -> USB Serial and BLE notify.
   static uint8_t buffer[128];
   size_t n = 0;
   while (RakSerial.available() && n < sizeof(buffer)) {
@@ -314,13 +309,11 @@ void loop() {
     bleNotifyChunk(buffer, n);
   }
 
-  // Refresh screen occasionally, without flooding I2C.
   if (millis() - lastDisplayMs > 1200) {
     lastDisplayMs = millis();
     drawStatus();
   }
 
-  // Restart advertising after disconnect.
   if (!bleConnected && oldBleConnected) {
     delay(500);
     bleServer->startAdvertising();

@@ -6,43 +6,81 @@
 <meta name="theme-color" content="#0f172a" />
 <title>LoRaFieldLink</title>
 <style>
-:root{color-scheme:dark;--bg:#0f172a;--panel:#111827;--panel2:#020617;--line:#334155;--text:#e5e7eb;--muted:#94a3b8;--primary:#2563eb;--danger:#dc2626;--ok:#22c55e;--warn:#f59e0b;--info:#38bdf8}*{box-sizing:border-box}body{margin:0;padding:14px;background:radial-gradient(circle at top,#1e293b 0,var(--bg) 36rem);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}main{max-width:760px;margin:0 auto}h1{margin:0 0 4px;font-size:1.7rem}h2{margin:0 0 10px;font-size:1.05rem}.subtitle,.small{color:var(--muted);font-size:.9rem}.card{background:#111827;border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:14px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}button,input,textarea{font:inherit}button{width:100%;min-height:44px;padding:11px;border:0;border-radius:12px;background:var(--primary);color:white;font-weight:750}button.secondary{background:#475569}button.danger{background:var(--danger)}button.success{background:#16a34a}button.warning{background:#d97706}button.ble{background:#7c3aed}input,textarea{width:100%;margin:6px 0 8px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--panel2);color:var(--text)}textarea{min-height:70px}pre{margin:0;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px;white-space:pre-wrap;word-break:break-word;min-height:160px;max-height:430px;overflow:auto;font-size:.88rem;line-height:1.35}.status-row{display:grid;grid-template-columns:96px 1fr;gap:8px;margin:4px 0}.label{color:var(--muted)}.status{font-weight:800;color:var(--info)}.ok{color:var(--ok)}.warn{color:var(--warn)}.bad{color:#f87171}@media(max-width:560px){body{padding:10px}.grid{grid-template-columns:1fr}}
+:root{color-scheme:dark;--bg:#0f172a;--panel:#111827;--panel2:#020617;--line:#334155;--text:#e5e7eb;--muted:#94a3b8;--primary:#2563eb;--danger:#dc2626;--ok:#22c55e;--warn:#f59e0b;--ble:#7c3aed}*{box-sizing:border-box}body{margin:0;padding:14px;background:radial-gradient(circle at top,#1e293b 0,var(--bg) 36rem);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}main{max-width:820px;margin:0 auto}h1{margin:0 0 4px;font-size:1.7rem}h2{margin:0 0 10px;font-size:1.05rem}h3{margin:10px 0 8px;font-size:.95rem}.subtitle,.small{color:var(--muted);font-size:.9rem}.card{background:#111827;border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:14px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.pillrow{display:flex;gap:8px;flex-wrap:wrap}.pill{border:1px solid var(--line);background:#0b1220;border-radius:999px;padding:6px 10px;color:var(--muted);font-size:.86rem}.pill.ok{color:var(--ok);border-color:#166534}.pill.warn{color:var(--warn);border-color:#854d0e}.pill.bad{color:#f87171;border-color:#7f1d1d}button,input,textarea{font:inherit}button{width:100%;min-height:44px;padding:11px;border:0;border-radius:12px;background:var(--primary);color:white;font-weight:750;touch-action:manipulation}button.secondary{background:#475569}button.danger{background:var(--danger)}button.success{background:#16a34a}button.warning{background:#d97706}button.ble{background:var(--ble)}button:disabled{opacity:.45}input,textarea{width:100%;margin:6px 0 8px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--panel2);color:var(--text)}textarea{min-height:70px}pre{margin:0;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px;white-space:pre-wrap;word-break:break-word;min-height:120px;max-height:380px;overflow:auto;font-size:.88rem;line-height:1.35}.status-row{display:grid;grid-template-columns:110px 1fr;gap:8px;margin:5px 0}.label{color:var(--muted)}.status{font-weight:800;color:#38bdf8}.ok{color:var(--ok)}.warn{color:var(--warn)}.bad{color:#f87171}details summary{cursor:pointer;color:#cbd5e1;font-weight:700;margin-bottom:10px}.step{border:1px solid var(--line);border-radius:12px;padding:10px;background:#0b1220;margin:8px 0}.step-title{font-weight:800}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}@media(max-width:620px){body{padding:10px}.grid,.grid3{grid-template-columns:1fr}.status-row{grid-template-columns:95px 1fr}}
 </style>
 </head>
 <body>
 <main>
 <h1>LoRaFieldLink</h1>
-<p class="subtitle">Prueba BLE agregada. USB serial queda disponible para PC/diagnóstico.</p>
+<p class="subtitle">Flujo de campo guiado: conectar nodo, verificar LoRaWAN, tomar GPS, enviar punto y guardar evidencia.</p>
+
 <section class="card">
-<h2>Estado</h2>
+<h2>Estado del nodo</h2>
+<div class="pillrow">
+<span id="pillLink" class="pill">BLE/USB: desconectado</span>
+<span id="pillJoin" class="pill">JOIN: desconocido</span>
+<span id="pillGps" class="pill">GPS: sin lectura</span>
+<span id="pillLast" class="pill">Último: --</span>
+</div>
 <div class="status-row"><span class="label">Enlace</span><span id="linkStatus" class="status">No conectado</span></div>
 <div class="status-row"><span class="label">Modo</span><span id="backendStatus" class="status">Ninguno</span></div>
 <div class="status-row"><span class="label">RX</span><span id="rxStatus" class="status">Inactivo</span></div>
-<div class="status-row"><span class="label">GPS</span><span id="gpsStatus" class="status">Sin lectura</span></div>
 <div class="status-row"><span class="label">JOIN</span><span id="joinStatus" class="status">Desconocido</span></div>
+<div class="status-row"><span class="label">GPS</span><span id="gpsStatus" class="status">Sin lectura</span></div>
 <p id="supportNote" class="small"></p>
 </section>
+
 <section class="card">
-<h2>Conexión</h2>
+<h2>1. Conectar</h2>
 <div class="grid"><button id="connectBleBtn" class="ble">Conectar BLE ESP32-C3</button><button id="disconnectBtn" class="danger">Desconectar</button></div>
+<p class="small">Ruta recomendada en campo: BLE. USB queda como respaldo de laboratorio.</p>
+<details>
+<summary>Opciones USB de diagnóstico</summary>
 <div class="grid"><button id="connectNativeBtn" class="secondary">USB Web Serial PC</button><button id="connectWebUsbBtn" class="warning">USB WebUSB Android</button></div>
-<p class="small">Para esta prueba usa BLE. WebUSB se mantiene solo como respaldo/diagnóstico.</p>
+</details>
 </section>
+
 <section class="card">
-<h2>Comandos RAK3272</h2>
+<h2>2. Preparar nodo</h2>
+<div class="grid3">
+<button id="prepareBtn">Preparar nodo</button>
+<button id="joinBtn" class="warning">Unirse a TTN</button>
+<button id="njsBtn" class="secondary">Consultar JOIN</button>
+</div>
+<div class="step"><div class="step-title">Secuencia recomendada</div><div class="small">Preparar nodo envía <span class="mono">AT</span>, desactiva eco con <span class="mono">ATE=0</span> y consulta <span class="mono">AT+NJS=?</span>. Si JOIN es NO, usa “Unirse a TTN”.</div></div>
+</section>
+
+<section class="card">
+<h2>3. Registrar y enviar punto</h2>
+<div class="grid"><button id="gpsBtn">Leer GPS</button><button id="sendPointBtn" class="success">Enviar punto actual</button></div>
+<div class="grid"><input id="pointInput" type="number" min="1" value="1" aria-label="Número de punto" /><input id="payloadInput" value="auto" aria-label="Payload" /></div>
+<textarea id="noteInput" placeholder="Nota opcional: sitio, altura, obstáculos, condición del gateway, etc."></textarea>
+<pre id="gpsOutput">Sin datos GPS todavía.</pre>
+<p class="small">Payload auto usa el número de punto como 1 byte hexadecimal: punto 2 → <span class="mono">02</span>.</p>
+</section>
+
+<section class="card">
+<h2>4. Evidencia local</h2>
+<div class="grid"><button id="exportBtn" class="secondary">Exportar registros JSON</button><button id="clearBtn" class="danger">Borrar registros locales</button></div>
+<pre id="recordsOutput">[]</pre>
+</section>
+
+<section class="card">
+<details>
+<summary>Consola avanzada AT</summary>
 <input id="commandInput" value="AT" autocapitalize="off" autocomplete="off" spellcheck="false" />
-<button id="sendBtn">Enviar comando</button>
-<div class="grid">
+<button id="sendBtn">Enviar comando manual</button>
+<div class="grid3">
 <button class="secondary" data-cmd="AT">AT</button>
-<button class="secondary" data-cmd="ATE=0">Quitar eco</button>
-<button class="secondary" data-cmd="AT+NJS=?">Estado JOIN</button>
+<button class="secondary" data-cmd="ATE=0">ATE=0</button>
+<button class="secondary" data-cmd="AT+NJS=?">NJS?</button>
 <button class="secondary" data-cmd="AT+JOIN">JOIN</button>
 <button class="success" data-cmd="AT+SEND=2:01">SEND 01</button>
 <button class="success" data-cmd="AT+SEND=2:02">SEND 02</button>
 </div>
+</details>
 </section>
-<section class="card"><h2>GPS</h2><button id="gpsBtn">Leer GPS</button><pre id="gpsOutput">Sin datos GPS todavía.</pre></section>
-<section class="card"><h2>Registro rápido</h2><div class="grid"><input id="pointInput" type="number" min="1" value="1" /><button id="sendPointBtn" class="success">Enviar punto actual</button></div><textarea id="noteInput" placeholder="Nota opcional"></textarea><button id="exportBtn" class="secondary">Exportar registros JSON</button><pre id="recordsOutput">[]</pre></section>
+
 <section class="card"><h2>Consola</h2><pre id="terminal"></pre></section>
 </main>
 <script type="module">
@@ -51,31 +89,39 @@ const NUS_RX='6e400002-b5a3-f393-e0a9-e50e24dcca9e';
 const NUS_TX='6e400003-b5a3-f393-e0a9-e50e24dcca9e';
 let mode='none', port=null, usbReader=null, usbRxRunning=false, webUsbSerial=null;
 let bleDevice=null, bleServer=null, bleRxChar=null, bleTxChar=null;
-let latestGps=null, records=[], serialBuffer='';
+let latestGps=null, records=[], serialBuffer='', lastResponse='', joinState=-1, lastPayload='--';
 const enc=new TextEncoder(),dec=new TextDecoder();
 const $=id=>document.getElementById(id);
-const linkStatus=$('linkStatus'),backendStatus=$('backendStatus'),rxStatus=$('rxStatus'),gpsStatus=$('gpsStatus'),joinStatus=$('joinStatus'),supportNote=$('supportNote'),terminal=$('terminal'),gpsOutput=$('gpsOutput'),commandInput=$('commandInput'),pointInput=$('pointInput'),noteInput=$('noteInput'),recordsOutput=$('recordsOutput');
+const linkStatus=$('linkStatus'),backendStatus=$('backendStatus'),rxStatus=$('rxStatus'),gpsStatus=$('gpsStatus'),joinStatus=$('joinStatus'),supportNote=$('supportNote'),terminal=$('terminal'),gpsOutput=$('gpsOutput'),commandInput=$('commandInput'),pointInput=$('pointInput'),payloadInput=$('payloadInput'),noteInput=$('noteInput'),recordsOutput=$('recordsOutput');
+const pillLink=$('pillLink'),pillJoin=$('pillJoin'),pillGps=$('pillGps'),pillLast=$('pillLast');
 function setStatus(el,t,c){el.textContent=t;el.className='status'+(c?' '+c:'')}
+function setPill(el,t,c){el.textContent=t;el.className='pill'+(c?' '+c:'')}
 function log(t){terminal.textContent+='['+new Date().toLocaleTimeString()+'] '+t+'\n';terminal.scrollTop=terminal.scrollHeight}
 function raw(t){terminal.textContent+=t;terminal.scrollTop=terminal.scrollHeight}
-function appendSerial(t){raw(t);serialBuffer+=t;if(serialBuffer.length>8000)serialBuffer=serialBuffer.slice(-8000);parseRak(serialBuffer)}
-function parseRak(b){if(b.includes('+EVT:JOINED')||b.includes('AT+NJS=1'))setStatus(joinStatus,'JOINED','ok');if(b.includes('JOIN_FAILED')||b.includes('AT+NJS=0'))setStatus(joinStatus,'NO JOIN','warn');if(b.includes('RX_TIMEOUT'))setStatus(joinStatus,'RX TIMEOUT','bad')}
-function checkSupport(){const n=[];n.push(('bluetooth'in navigator)?'Web Bluetooth disponible.':'Web Bluetooth NO disponible.');n.push(('serial'in navigator)?'Web Serial disponible.':'Web Serial no disponible.');n.push(('usb'in navigator)?'WebUSB disponible.':'WebUSB no disponible.');n.push(('geolocation'in navigator)?'GPS disponible.':'GPS no disponible.');supportNote.textContent=n.join(' ');log(n.join(' '))}
-async function connectBle(){try{await disconnectAll(true);if(!('bluetooth'in navigator)){alert('Este navegador no soporta Web Bluetooth. Usa Chrome Android.');return}log('Buscando LoRaFieldLink-C3 por BLE...');bleDevice=await navigator.bluetooth.requestDevice({filters:[{namePrefix:'LoRaFieldLink'}],optionalServices:[NUS_SERVICE]});bleDevice.addEventListener('gattserverdisconnected',()=>{setStatus(linkStatus,'BLE desconectado','warn');setStatus(rxStatus,'Inactivo','warn');log('BLE desconectado.')});bleServer=await bleDevice.gatt.connect();const service=await bleServer.getPrimaryService(NUS_SERVICE);bleRxChar=await service.getCharacteristic(NUS_RX);bleTxChar=await service.getCharacteristic(NUS_TX);await bleTxChar.startNotifications();bleTxChar.addEventListener('characteristicvaluechanged',e=>{appendSerial(dec.decode(e.target.value))});mode='ble';setStatus(linkStatus,'Conectado','ok');setStatus(backendStatus,'BLE ESP32-C3','ok');setStatus(rxStatus,'Notify activo','ok');log('BLE conectado. Ahora prueba AT.')}catch(e){setStatus(linkStatus,'Error BLE','bad');log('ERROR BLE: '+(e.message||e))}}
+function refreshPills(){setPill(pillLink,mode==='none'?'BLE/USB: desconectado':'BLE/USB: '+mode,(mode==='none')?'warn':'ok');setPill(pillJoin,joinState===1?'JOIN: sí':joinState===0?'JOIN: no':'JOIN: desconocido',joinState===1?'ok':joinState===0?'warn':'');setPill(pillGps,latestGps?'GPS: ±'+Math.round(latestGps.accuracy_m)+' m':'GPS: sin lectura',latestGps?'ok':'warn');setPill(pillLast,'Último: '+(lastResponse||'--'),lastResponse==='OK'?'ok':lastResponse.includes('ERROR')?'bad':'')}
+function appendSerial(t){raw(t);serialBuffer+=t;if(serialBuffer.length>10000)serialBuffer=serialBuffer.slice(-10000);parseRak(serialBuffer)}
+function parseRak(b){if(b.includes('+EVT:JOINED')||b.includes('AT+NJS=1')){joinState=1;setStatus(joinStatus,'JOINED','ok');lastResponse='JOINED'}else if(b.includes('JOIN_FAILED')||b.includes('AT+NJS=0')){joinState=0;setStatus(joinStatus,'NO JOIN','warn');lastResponse='NO JOIN'}if(b.includes('RX_TIMEOUT')){lastResponse='RX TIMEOUT'}const tail=b.slice(-220);if(tail.includes('OK'))lastResponse='OK';if(tail.includes('ERROR'))lastResponse='ERROR';refreshPills()}
+function checkSupport(){const n=[];n.push(('bluetooth'in navigator)?'Web Bluetooth disponible.':'Web Bluetooth NO disponible.');n.push(('serial'in navigator)?'Web Serial disponible.':'Web Serial no disponible.');n.push(('usb'in navigator)?'WebUSB disponible.':'WebUSB no disponible.');n.push(('geolocation'in navigator)?'GPS disponible.':'GPS no disponible.');supportNote.textContent=n.join(' ');log(n.join(' '));refreshPills()}
+async function connectBle(){try{await disconnectAll(true);if(!('bluetooth'in navigator)){alert('Este navegador no soporta Web Bluetooth. Usa Chrome Android.');return}log('Buscando LoRaFieldLink-C3 por BLE...');bleDevice=await navigator.bluetooth.requestDevice({filters:[{namePrefix:'LoRaFieldLink'}],optionalServices:[NUS_SERVICE]});bleDevice.addEventListener('gattserverdisconnected',()=>{mode='none';setStatus(linkStatus,'BLE desconectado','warn');setStatus(rxStatus,'Inactivo','warn');log('BLE desconectado.');refreshPills()});bleServer=await bleDevice.gatt.connect();const service=await bleServer.getPrimaryService(NUS_SERVICE);bleRxChar=await service.getCharacteristic(NUS_RX);bleTxChar=await service.getCharacteristic(NUS_TX);await bleTxChar.startNotifications();bleTxChar.addEventListener('characteristicvaluechanged',e=>{appendSerial(dec.decode(e.target.value))});mode='ble';setStatus(linkStatus,'Conectado','ok');setStatus(backendStatus,'BLE ESP32-C3','ok');setStatus(rxStatus,'Notify activo','ok');log('BLE conectado. Usa Preparar nodo.');refreshPills()}catch(e){setStatus(linkStatus,'Error BLE','bad');log('ERROR BLE: '+(e.message||e));refreshPills()}}
 async function sendBle(text){if(!bleRxChar){alert('Primero conecta BLE.');return}const data=enc.encode(text);for(let i=0;i<data.length;i+=20){const chunk=data.slice(i,i+20);if(bleRxChar.writeValueWithoutResponse)await bleRxChar.writeValueWithoutResponse(chunk);else await bleRxChar.writeValue(chunk);await new Promise(r=>setTimeout(r,12))}}
 async function getWebUsbSerial(){if(webUsbSerial)return webUsbSerial;log('Cargando WebUSB serial polyfill...');webUsbSerial=(await import('https://cdn.jsdelivr.net/npm/web-serial-polyfill@1.0.15/dist/serial.js')).serial;return webUsbSerial}
 async function connectNative(){if(!('serial'in navigator)){alert('Web Serial no disponible.');return}await connectUsbLike(navigator.serial,'Web Serial PC')}
 async function connectWebUsb(){if(!('usb'in navigator)){alert('WebUSB no disponible.');return}await connectUsbLike(await getWebUsbSerial(),'WebUSB Android')}
-async function connectUsbLike(api,name){try{await disconnectAll(true);port=await api.requestPort({});await port.open({baudRate:115200,baudrate:115200,dataBits:8,databits:8,stopBits:1,stopbits:1,parity:'none',flowControl:'none',rtscts:false,bufferSize:8192});if(port.setSignals){try{await port.setSignals({dataTerminalReady:true,requestToSend:true})}catch{}}mode='usb';setStatus(linkStatus,'Conectado','ok');setStatus(backendStatus,name,'ok');log('USB conectado con '+name+'.');startUsbRx()}catch(e){setStatus(linkStatus,'Error USB','bad');log('ERROR USB: '+(e.message||e))}}
+async function connectUsbLike(api,name){try{await disconnectAll(true);port=await api.requestPort({});await port.open({baudRate:115200,baudrate:115200,dataBits:8,databits:8,stopBits:1,stopbits:1,parity:'none',flowControl:'none',rtscts:false,bufferSize:8192});if(port.setSignals){try{await port.setSignals({dataTerminalReady:true,requestToSend:true})}catch{}}mode='usb';setStatus(linkStatus,'Conectado','ok');setStatus(backendStatus,name,'ok');log('USB conectado con '+name+'.');startUsbRx();refreshPills()}catch(e){setStatus(linkStatus,'Error USB','bad');log('ERROR USB: '+(e.message||e));refreshPills()}}
 async function startUsbRx(){if(!port||usbRxRunning)return;usbRxRunning=true;setStatus(rxStatus,'Leyendo USB','ok');while(port&&usbRxRunning&&port.readable){try{usbReader=port.readable.getReader();for(;;){const r=await usbReader.read();if(r.value)appendSerial(dec.decode(r.value,{stream:true}));if(r.done)break}}catch(e){log('RX USB error: '+(e.message||e))}finally{try{usbReader?.releaseLock()}catch{}usbReader=null}await new Promise(r=>setTimeout(r,300))}usbRxRunning=false;setStatus(rxStatus,'Pausado','warn')}
 async function sendCommand(c){const clean=c.trim();if(!clean)return;log('>> '+clean);if(mode==='ble'){await sendBle(clean+'\r\n');return clean}if(mode==='usb'){if(!port||!port.writable){alert('USB no conectado.');return}let w;try{w=port.writable.getWriter();await w.write(enc.encode(clean+'\r\n'));return clean}catch(e){log('ERROR enviar USB: '+(e.message||e))}finally{try{w?.releaseLock()}catch{}}return}alert('Primero conecta BLE o USB.')}
-async function disconnectAll(silent=false){usbRxRunning=false;if(usbReader){try{await usbReader.cancel()}catch{}try{usbReader.releaseLock()}catch{}usbReader=null}if(port){try{if(port.setSignals)await port.setSignals({dataTerminalReady:false,requestToSend:false})}catch{}try{await port.close()}catch{}port=null}if(bleDevice?.gatt?.connected){try{bleDevice.gatt.disconnect()}catch{}}bleDevice=null;bleServer=null;bleRxChar=null;bleTxChar=null;mode='none';if(!silent){setStatus(linkStatus,'Desconectado','warn');setStatus(backendStatus,'Ninguno','warn');setStatus(rxStatus,'Inactivo','warn');log('Desconectado.')}}
-function readGPS(){return new Promise((resolve,reject)=>{if(!('geolocation'in navigator)){alert('GPS no disponible');reject(new Error('GPS no disponible'));return}setStatus(gpsStatus,'Leyendo...','warn');navigator.geolocation.getCurrentPosition(p=>{latestGps={timestamp:new Date(p.timestamp).toISOString(),latitude:p.coords.latitude,longitude:p.coords.longitude,accuracy_m:p.coords.accuracy,altitude:p.coords.altitude,altitude_accuracy:p.coords.altitudeAccuracy,speed:p.coords.speed,heading:p.coords.heading};setStatus(gpsStatus,'OK ±'+Math.round(latestGps.accuracy_m)+' m','ok');gpsOutput.textContent=JSON.stringify(latestGps,null,2);log('GPS: '+latestGps.latitude+', '+latestGps.longitude+' ±'+latestGps.accuracy_m+' m');resolve(latestGps)},e=>{setStatus(gpsStatus,'Error','bad');log('GPS error: '+e.message);reject(e)},{enableHighAccuracy:true,timeout:15000,maximumAge:0})})}
+async function sendSequence(commands,delayMs=700){for(const c of commands){await sendCommand(c);await new Promise(r=>setTimeout(r,delayMs))}}
+async function prepareNode(){serialBuffer='';lastResponse='';await sendSequence(['AT','ATE=0','AT+NJS=?'],900)}
+async function joinNetwork(){serialBuffer='';lastResponse='';await sendCommand('AT+JOIN');log('Esperando evento JOIN. Puede tardar varios segundos.');setTimeout(()=>sendCommand('AT+NJS=?'),12000)}
+async function disconnectAll(silent=false){usbRxRunning=false;if(usbReader){try{await usbReader.cancel()}catch{}try{usbReader.releaseLock()}catch{}usbReader=null}if(port){try{if(port.setSignals)await port.setSignals({dataTerminalReady:false,requestToSend:false})}catch{}try{await port.close()}catch{}port=null}if(bleDevice?.gatt?.connected){try{bleDevice.gatt.disconnect()}catch{}}bleDevice=null;bleServer=null;bleRxChar=null;bleTxChar=null;mode='none';if(!silent){setStatus(linkStatus,'Desconectado','warn');setStatus(backendStatus,'Ninguno','warn');setStatus(rxStatus,'Inactivo','warn');log('Desconectado.')}refreshPills()}
+function readGPS(){return new Promise((resolve,reject)=>{if(!('geolocation'in navigator)){alert('GPS no disponible');reject(new Error('GPS no disponible'));return}setStatus(gpsStatus,'Leyendo...','warn');navigator.geolocation.getCurrentPosition(p=>{latestGps={timestamp:new Date(p.timestamp).toISOString(),latitude:p.coords.latitude,longitude:p.coords.longitude,accuracy_m:p.coords.accuracy,altitude:p.coords.altitude,altitude_accuracy:p.coords.altitudeAccuracy,speed:p.coords.speed,heading:p.coords.heading};setStatus(gpsStatus,'OK ±'+Math.round(latestGps.accuracy_m)+' m','ok');gpsOutput.textContent=JSON.stringify(latestGps,null,2);log('GPS: '+latestGps.latitude+', '+latestGps.longitude+' ±'+latestGps.accuracy_m+' m');refreshPills();resolve(latestGps)},e=>{setStatus(gpsStatus,'Error','bad');log('GPS error: '+e.message);refreshPills();reject(e)},{enableHighAccuracy:true,timeout:15000,maximumAge:0})})}
 function toHexByte(n){return Math.max(0,Math.min(255,Number(n)||0)).toString(16).padStart(2,'0').toUpperCase()}
-async function sendPoint(){const point=Number(pointInput.value)||1,payload=toHexByte(point),gps=latestGps||await readGPS().catch(()=>null),cmd='AT+SEND=2:'+payload,sent=await sendCommand(cmd);if(!sent)return;records.push({point,payload_hex:payload,command:cmd,phone_timestamp:new Date().toISOString(),gps,note:noteInput.value.trim(),mode});recordsOutput.textContent=JSON.stringify(records,null,2);localStorage.setItem('loraFieldLinkRecords',JSON.stringify(records));pointInput.value=String(point+1);log('Registro guardado punto '+point+', payload '+payload+'.')}
+function currentPayload(){let p=payloadInput.value.trim();if(!p||p.toLowerCase()==='auto')return toHexByte(Number(pointInput.value)||1);return p.replace(/[^a-fA-F0-9]/g,'').toUpperCase()}
+async function sendPoint(){const point=Number(pointInput.value)||1,payload=currentPayload(),gps=latestGps||await readGPS().catch(()=>null),cmd='AT+SEND=2:'+payload;lastPayload=payload;const sent=await sendCommand(cmd);if(!sent)return;const record={point,payload_hex:payload,command:cmd,phone_timestamp:new Date().toISOString(),gps,note:noteInput.value.trim(),mode,join_state:joinState,last_response:lastResponse};records.push(record);recordsOutput.textContent=JSON.stringify(records,null,2);localStorage.setItem('loraFieldLinkRecords',JSON.stringify(records));pointInput.value=String(point+1);payloadInput.value='auto';log('Registro guardado punto '+point+', payload '+payload+'.');refreshPills()}
 function loadRecords(){try{records=JSON.parse(localStorage.getItem('loraFieldLinkRecords')||'[]');recordsOutput.textContent=JSON.stringify(records,null,2)}catch{records=[]}}
 function exportRecords(){const blob=new Blob([JSON.stringify(records,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='lorafieldlink-'+new Date().toISOString().replace(/[:.]/g,'-')+'.json';a.click();URL.revokeObjectURL(url)}
-$('connectBleBtn').onclick=connectBle;$('connectNativeBtn').onclick=connectNative;$('connectWebUsbBtn').onclick=connectWebUsb;$('disconnectBtn').onclick=()=>disconnectAll();$('sendBtn').onclick=()=>sendCommand(commandInput.value);$('gpsBtn').onclick=readGPS;$('sendPointBtn').onclick=sendPoint;$('exportBtn').onclick=exportRecords;document.querySelectorAll('button[data-cmd]').forEach(b=>b.onclick=()=>{commandInput.value=b.dataset.cmd;sendCommand(b.dataset.cmd)});loadRecords();checkSupport();
+function clearRecords(){if(confirm('¿Borrar registros locales de este navegador?')){records=[];localStorage.removeItem('loraFieldLinkRecords');recordsOutput.textContent='[]';log('Registros locales borrados.')}}
+$('connectBleBtn').onclick=connectBle;$('connectNativeBtn').onclick=connectNative;$('connectWebUsbBtn').onclick=connectWebUsb;$('disconnectBtn').onclick=()=>disconnectAll();$('prepareBtn').onclick=prepareNode;$('joinBtn').onclick=joinNetwork;$('njsBtn').onclick=()=>sendCommand('AT+NJS=?');$('sendBtn').onclick=()=>sendCommand(commandInput.value);$('gpsBtn').onclick=readGPS;$('sendPointBtn').onclick=sendPoint;$('exportBtn').onclick=exportRecords;$('clearBtn').onclick=clearRecords;document.querySelectorAll('button[data-cmd]').forEach(b=>b.onclick=()=>{commandInput.value=b.dataset.cmd;sendCommand(b.dataset.cmd)});loadRecords();checkSupport();
 </script>
 </body>
 </html>

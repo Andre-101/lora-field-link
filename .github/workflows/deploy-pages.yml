@@ -25,7 +25,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Generate runtime config
-        shell: bash
+        shell: python
         env:
           LFL_APPS_SCRIPT_URL: ${{ vars.LFL_APPS_SCRIPT_URL }}
           LFL_API_TOKEN: ${{ secrets.LFL_API_TOKEN }}
@@ -35,17 +35,34 @@ jobs:
           LFL_GATEWAY_LON: ${{ vars.LFL_GATEWAY_LON }}
           LFL_MAP_ZOOM: ${{ vars.LFL_MAP_ZOOM }}
         run: |
-          cat > config.js <<EOF
-          window.LFL_CONFIG = {
-            API_URL: '${LFL_APPS_SCRIPT_URL}',
-            API_TOKEN: '${LFL_API_TOKEN}',
-            DEVICE_START: Number('${LFL_DEVICE_START:-1}'),
-            DEVICE_END: Number('${LFL_DEVICE_END:-8}'),
-            GATEWAY_LAT: Number('${LFL_GATEWAY_LAT:-3.341264}'),
-            GATEWAY_LON: Number('${LFL_GATEWAY_LON:--76.529448}'),
-            MAP_ZOOM: Number('${LFL_MAP_ZOOM:-17}')
-          };
-          EOF
+          import json
+          import os
+
+          def number_env(name, default):
+              raw = os.environ.get(name, '')
+              if raw == '':
+                  return default
+              try:
+                  if isinstance(default, int):
+                      return int(raw)
+                  return float(raw)
+              except ValueError:
+                  return default
+
+          config = {
+              'API_URL': os.environ.get('LFL_APPS_SCRIPT_URL', ''),
+              'API_TOKEN': os.environ.get('LFL_API_TOKEN', ''),
+              'DEVICE_START': number_env('LFL_DEVICE_START', 1),
+              'DEVICE_END': number_env('LFL_DEVICE_END', 8),
+              'GATEWAY_LAT': number_env('LFL_GATEWAY_LAT', 3.341264),
+              'GATEWAY_LON': number_env('LFL_GATEWAY_LON', -76.529448),
+              'MAP_ZOOM': number_env('LFL_MAP_ZOOM', 17),
+          }
+
+          with open('config.js', 'w', encoding='utf-8') as f:
+              f.write('window.LFL_CONFIG = ')
+              f.write(json.dumps(config, ensure_ascii=False, indent=2))
+              f.write(';\n')
 
       - name: Setup Pages
         uses: actions/configure-pages@v5

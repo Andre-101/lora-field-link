@@ -10,412 +10,67 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
 <style>
-:root{color-scheme:dark;--bg:#07111f;--panel:#0f172a;--panel2:#020617;--line:#263449;--text:#e5e7eb;--muted:#94a3b8;--primary:#2563eb;--danger:#dc2626;--ok:#22c55e;--warn:#f59e0b;--icesi:#0057a8;--cyan:#38bdf8}*{box-sizing:border-box}body{margin:0;padding:14px;background:radial-gradient(circle at top left,#123969 0,#07111f 32rem);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}main{max-width:1040px;margin:0 auto}.topbar{display:flex;gap:14px;align-items:center;margin-bottom:14px}.brand-logo{height:48px;max-width:170px;object-fit:contain;background:white;border-radius:12px;padding:8px}.brand-title h1{margin:0;font-size:1.75rem}.subtitle,.small{color:var(--muted);font-size:.9rem}.card{background:rgba(15,23,42,.92);border:1px solid var(--line);border-radius:18px;padding:14px;margin-bottom:14px;box-shadow:0 18px 45px rgba(0,0,0,.18)}.layout{display:grid;grid-template-columns:380px 1fr;gap:14px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.status-grid{display:grid;grid-template-columns:105px 1fr;gap:8px;margin:7px 0}.label{color:var(--muted)}.status{font-weight:800;color:var(--cyan)}.ok{color:var(--ok)}.warn{color:var(--warn)}.bad{color:#f87171}button,select,input{font:inherit}button{width:100%;min-height:46px;padding:11px;border:0;border-radius:13px;background:var(--primary);color:white;font-weight:800;touch-action:manipulation}button.main{min-height:62px;font-size:1.05rem;background:linear-gradient(135deg,#0ea5e9,#2563eb)}button.secondary{background:#475569}button.danger{background:var(--danger)}button.warning{background:#d97706}button:disabled{opacity:.45;cursor:not-allowed}select,input{width:100%;margin:6px 0 10px;padding:12px;border:1px solid var(--line);border-radius:13px;background:var(--panel2);color:var(--text)}.metric-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.metric{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:10px}.metric b{display:block;font-size:1.25rem}.metric span{color:var(--muted);font-size:.82rem}#map{height:560px;border-radius:18px;border:1px solid var(--line);overflow:hidden;background:#0b1220}.table-wrap{overflow:auto;max-height:260px;border:1px solid var(--line);border-radius:14px}table{width:100%;border-collapse:collapse;font-size:.86rem}th,td{padding:9px;border-bottom:1px solid var(--line);white-space:nowrap}th{color:var(--muted);text-align:left;background:#0b1220;position:sticky;top:0}.log{margin:0;background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:12px;white-space:pre-wrap;word-break:break-word;min-height:100px;max-height:230px;overflow:auto;font-size:.82rem;line-height:1.35}.hidden{display:none!important}.leaflet-container{background:#0b1220}.gateway-icon{font-size:24px}.config-warning{border-color:#854d0e;background:rgba(245,158,11,.08)}@media(max-width:860px){body{padding:10px}.layout{grid-template-columns:1fr}.topbar{align-items:flex-start}.brand-logo{height:42px}.metric-row{grid-template-columns:1fr 1fr}#map{height:440px}}@media(max-width:520px){.grid,.metric-row{grid-template-columns:1fr}.brand-title h1{font-size:1.35rem}}
+:root{color-scheme:dark;--bg:#07111f;--panel:#0f172a;--panel2:#020617;--line:#263449;--text:#e5e7eb;--muted:#94a3b8;--primary:#2563eb;--danger:#dc2626;--ok:#22c55e;--warn:#f59e0b;--cyan:#38bdf8}*{box-sizing:border-box}body{margin:0;padding:14px;background:radial-gradient(circle at top left,#123969 0,#07111f 32rem);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}main{max-width:1040px;margin:0 auto}.topbar{display:flex;gap:14px;align-items:center;margin-bottom:14px}.brand-logo{height:48px;max-width:170px;object-fit:contain;background:white;border-radius:12px;padding:8px}.brand-title h1{margin:0;font-size:1.75rem}.subtitle,.small{color:var(--muted);font-size:.9rem}.card{background:rgba(15,23,42,.92);border:1px solid var(--line);border-radius:18px;padding:14px;margin-bottom:14px}.layout{display:grid;grid-template-columns:380px 1fr;gap:14px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.status-grid{display:grid;grid-template-columns:105px 1fr;gap:8px;margin:7px 0}.label{color:var(--muted)}.status{font-weight:800;color:var(--cyan)}.ok{color:var(--ok)}.warn{color:var(--warn)}.bad{color:#f87171}button,select,input{font:inherit}button{width:100%;min-height:46px;padding:11px;border:0;border-radius:13px;background:var(--primary);color:white;font-weight:800;touch-action:manipulation}button.main{min-height:62px;font-size:1.05rem;background:linear-gradient(135deg,#0ea5e9,#2563eb)}button.danger{background:var(--danger)}button.warning{background:#d97706}button:disabled{opacity:.45;cursor:not-allowed}select,input{width:100%;margin:6px 0 10px;padding:12px;border:1px solid var(--line);border-radius:13px;background:var(--panel2);color:var(--text)}.metric-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.metric{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:10px}.metric b{display:block;font-size:1.25rem}.metric span{color:var(--muted);font-size:.82rem}#map{height:560px;border-radius:18px;border:1px solid var(--line);overflow:hidden;background:#0b1220}.table-wrap{overflow:auto;max-height:260px;border:1px solid var(--line);border-radius:14px}table{width:100%;border-collapse:collapse;font-size:.86rem}th,td{padding:9px;border-bottom:1px solid var(--line);white-space:nowrap}th{color:var(--muted);text-align:left;background:#0b1220;position:sticky;top:0}.log{margin:0;background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:12px;white-space:pre-wrap;word-break:break-word;min-height:100px;max-height:230px;overflow:auto;font-size:.82rem;line-height:1.35}.hidden{display:none!important}.leaflet-container{background:#0b1220}.config-warning{border-color:#854d0e;background:rgba(245,158,11,.08)}@media(max-width:860px){body{padding:10px}.layout{grid-template-columns:1fr}.topbar{align-items:flex-start}.brand-logo{height:42px}.metric-row{grid-template-columns:1fr 1fr}#map{height:440px}}@media(max-width:520px){.grid,.metric-row{grid-template-columns:1fr}.brand-title h1{font-size:1.35rem}}
 </style>
 </head>
 <body>
 <main>
 <header class="topbar">
-<img class="brand-logo" alt="Universidad Icesi" src="https://upload.wikimedia.org/wikipedia/commons/4/4a/Logo_universidad_icesi.svg" onerror="this.replaceWith(Object.assign(document.createElement('strong'),{textContent:'ICESI'}))" />
+<img class="brand-logo" alt="Universidad Icesi" src="assets/icesi-logo.svg" />
 <div class="brand-title">
 <h1>LoRaFieldLink Coverage</h1>
 <div class="subtitle">Medición de cobertura LoRaWAN con GPS, LinkCheck y mapa de calor por dispositivo.</div>
 </div>
 </header>
-
-<section id="configWarning" class="card config-warning hidden">
-<b>Configuración pendiente</b>
-<p class="small">Falta configurar la URL de Apps Script en <span class="mono">config.js</span>. La medición BLE puede funcionar, pero el guardado y el mapa no consultarán Google Sheets.</p>
-</section>
-
+<section id="configWarning" class="card config-warning hidden"><b>Configuración pendiente</b><p class="small">Falta cargar <span class="mono">config.js</span> con la URL de Apps Script. La medición BLE puede funcionar, pero el guardado y el mapa no consultarán Google Sheets.</p></section>
 <div class="layout">
 <section>
-<div class="card">
-<h2>Dispositivo</h2>
-<label class="small" for="deviceSelect">Selecciona el módulo RAK en uso</label>
-<select id="deviceSelect"></select>
-<div class="grid">
-<button id="connectBtn">Conectar BLE</button>
-<button id="disconnectBtn" class="danger">Desconectar</button>
-</div>
-<button id="retryJoinBtn" class="warning hidden">Reintentar JOIN</button>
-</div>
-
-<div class="card">
-<h2>Estado</h2>
-<div class="status-grid"><span class="label">BLE</span><span id="bleStatus" class="status warn">Desconectado</span></div>
-<div class="status-grid"><span class="label">LoRaWAN</span><span id="joinStatus" class="status warn">Sin verificar</span></div>
-<div class="status-grid"><span class="label">GPS</span><span id="gpsStatus" class="status warn">Pendiente</span></div>
-<div class="status-grid"><span class="label">API</span><span id="apiStatus" class="status warn">Sin verificar</span></div>
-<div class="status-grid"><span class="label">Proceso</span><span id="processStatus" class="status">Listo</span></div>
-</div>
-
-<div class="card">
-<button id="takeSampleBtn" class="main" disabled>Tomar dato</button>
-<p class="small">El botón lee GPS, confirma JOIN, ejecuta LinkCheck, envía el uplink, extrae RSSI/SNR y guarda el dato del dispositivo seleccionado.</p>
-</div>
-
-<div class="card">
-<h2>Última medición</h2>
-<div class="metric-row">
-<div class="metric"><b id="lastRssi">--</b><span>RSSI dBm</span></div>
-<div class="metric"><b id="lastSnr">--</b><span>SNR dB</span></div>
-<div class="metric"><b id="lastGw">--</b><span>Gateways</span></div>
-</div>
-<div class="status-grid"><span class="label">Payload</span><span id="lastPayload" class="status">--</span></div>
-<div class="status-grid"><span class="label">GPS ±</span><span id="lastAccuracy" class="status">--</span></div>
-</div>
-
-<div class="card">
-<h2>Detalles técnicos</h2>
-<pre id="log" class="log"></pre>
-</div>
+<div class="card"><h2>Dispositivo</h2><label class="small" for="deviceSelect">Selecciona el módulo RAK en uso</label><select id="deviceSelect"></select><div class="grid"><button id="connectBtn">Conectar BLE</button><button id="disconnectBtn" class="danger">Desconectar</button></div><button id="retryJoinBtn" class="warning hidden">Reintentar JOIN</button></div>
+<div class="card"><h2>Estado</h2><div class="status-grid"><span class="label">BLE</span><span id="bleStatus" class="status warn">Desconectado</span></div><div class="status-grid"><span class="label">LoRaWAN</span><span id="joinStatus" class="status warn">Sin verificar</span></div><div class="status-grid"><span class="label">GPS</span><span id="gpsStatus" class="status warn">Pendiente</span></div><div class="status-grid"><span class="label">API</span><span id="apiStatus" class="status warn">Sin verificar</span></div><div class="status-grid"><span class="label">Proceso</span><span id="processStatus" class="status">Listo</span></div></div>
+<div class="card"><button id="takeSampleBtn" class="main" disabled>Tomar dato</button><p class="small">Lee GPS, ejecuta LinkCheck, envía el uplink, extrae RSSI/SNR y guarda el dato del dispositivo seleccionado.</p></div>
+<div class="card"><h2>Última medición</h2><div class="metric-row"><div class="metric"><b id="lastRssi">--</b><span>RSSI dBm</span></div><div class="metric"><b id="lastSnr">--</b><span>SNR dB</span></div><div class="metric"><b id="lastGw">--</b><span>Gateways</span></div></div><div class="status-grid"><span class="label">Payload</span><span id="lastPayload" class="status">--</span></div><div class="status-grid"><span class="label">GPS ±</span><span id="lastAccuracy" class="status">--</span></div></div>
+<div class="card"><h2>Detalles técnicos</h2><pre id="log" class="log"></pre></div>
 </section>
-
 <section>
-<div class="card">
-<h2 id="mapTitle">Mapa de calor</h2>
-<div id="map"></div>
-<p id="emptyMapMsg" class="small hidden">Este dispositivo todavía no tiene mediciones guardadas.</p>
-</div>
-
-<div class="card">
-<h2>Últimos puntos</h2>
-<div class="table-wrap">
-<table>
-<thead><tr><th>Hora</th><th>RSSI</th><th>SNR</th><th>GW</th><th>Payload</th><th>Lat</th><th>Lon</th></tr></thead>
-<tbody id="pointsTable"></tbody>
-</table>
-</div>
-</div>
+<div class="card"><h2 id="mapTitle">Mapa de calor</h2><div id="map"></div><p id="emptyMapMsg" class="small hidden">Este dispositivo todavía no tiene mediciones guardadas.</p></div>
+<div class="card"><h2>Últimos puntos</h2><div class="table-wrap"><table><thead><tr><th>Hora</th><th>RSSI</th><th>SNR</th><th>GW</th><th>Payload</th><th>Lat</th><th>Lon</th></tr></thead><tbody id="pointsTable"></tbody></table></div></div>
 </section>
 </div>
 </main>
-
 <script type="module">
-const DEFAULT_CONFIG={
-  API_URL:'',
-  API_TOKEN:'',
-  DEVICE_START:1,
-  DEVICE_END:8,
-  GATEWAY_LAT:3.341264,
-  GATEWAY_LON:-76.529448,
-  MAP_ZOOM:17,
-  JOIN_TIMEOUT_MS:45000,
-  LINKCHECK_TIMEOUT_MS:25000
-};
+const DEFAULT_CONFIG={API_URL:'',API_TOKEN:'',DEVICE_START:1,DEVICE_END:8,GATEWAY_LAT:3.341264,GATEWAY_LON:-76.529448,MAP_ZOOM:17,JOIN_TIMEOUT_MS:45000,LINKCHECK_TIMEOUT_MS:25000};
 const CONFIG={...DEFAULT_CONFIG,...(window.LFL_CONFIG||{})};
-
-const NUS_SERVICE='6e400001-b5a3-f393-e0a9-e50e24dcca9e';
-const NUS_RX='6e400002-b5a3-f393-e0a9-e50e24dcca9e';
-const NUS_TX='6e400003-b5a3-f393-e0a9-e50e24dcca9e';
-
-let bleDevice=null, bleRxChar=null, bleTxChar=null;
-let rxBuffer='', joinState=-1, measuring=false;
-let waiters=[];
-let pointsLayer=null, heatLayer=null;
-let map=null;
-let latestGps=null;
-const enc=new TextEncoder();
-const dec=new TextDecoder();
-const $=id=>document.getElementById(id);
-
-const els={
-  deviceSelect:$('deviceSelect'),connect:$('connectBtn'),disconnect:$('disconnectBtn'),retry:$('retryJoinBtn'),take:$('takeSampleBtn'),
-  ble:$('bleStatus'),join:$('joinStatus'),gps:$('gpsStatus'),api:$('apiStatus'),process:$('processStatus'),log:$('log'),
-  lastRssi:$('lastRssi'),lastSnr:$('lastSnr'),lastGw:$('lastGw'),lastPayload:$('lastPayload'),lastAccuracy:$('lastAccuracy'),
-  mapTitle:$('mapTitle'),empty:$('emptyMapMsg'),table:$('pointsTable'),configWarning:$('configWarning')
-};
-
-function setStatus(el,text,kind=''){
-  el.textContent=text;
-  el.className='status'+(kind?' '+kind:'');
-}
-function log(msg){
-  els.log.textContent+='['+new Date().toLocaleTimeString()+'] '+msg+'\n';
-  els.log.scrollTop=els.log.scrollHeight;
-}
-function deviceList(){
-  const out=[];
-  for(let i=Number(CONFIG.DEVICE_START);i<=Number(CONFIG.DEVICE_END);i++) out.push('Dev-'+String(i).padStart(2,'0'));
-  return out;
-}
-function selectedDevice(){return els.deviceSelect.value;}
-function devNumber(dev){return Number(String(dev).replace('Dev-',''));}
-function setProcess(text,kind=''){setStatus(els.process,text,kind);}
-function setJoined(value){
-  joinState=value;
-  if(value===1){setStatus(els.join,'Unido a TTN','ok');els.retry.classList.add('hidden');}
-  else if(value===0){setStatus(els.join,'No unido','bad');els.retry.classList.remove('hidden');}
-  else{setStatus(els.join,'Sin verificar','warn');els.retry.classList.add('hidden');}
-  refreshActionState();
-}
-function refreshActionState(){
-  els.take.disabled=!(bleRxChar && joinState===1 && !measuring);
-}
-function escapeHtml(s){return String(s).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
-
-function initDevices(){
-  els.deviceSelect.innerHTML='';
-  for(const dev of deviceList()){
-    const opt=document.createElement('option');
-    opt.value=dev; opt.textContent=dev;
-    els.deviceSelect.appendChild(opt);
-  }
-  const remembered=localStorage.getItem('lfl-device');
-  if(remembered && deviceList().includes(remembered)) els.deviceSelect.value=remembered;
-}
-
-function initMap(){
-  map=L.map('map',{zoomControl:true}).setView([CONFIG.GATEWAY_LAT,CONFIG.GATEWAY_LON],CONFIG.MAP_ZOOM);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:20,attribution:'&copy; OpenStreetMap'}).addTo(map);
-  L.marker([CONFIG.GATEWAY_LAT,CONFIG.GATEWAY_LON],{title:'Gateway Icesi'}).addTo(map).bindPopup('<b>Gateway Icesi</b><br>Referencia de la práctica');
-  pointsLayer=L.layerGroup().addTo(map);
-  heatLayer=L.heatLayer([], {radius:34, blur:24, maxZoom:19, minOpacity:.32}).addTo(map);
-}
-
-function rssiToIntensity(rssi){
-  return Math.max(0,Math.min(1,(Number(rssi)+120)/60));
-}
-function fmtTime(iso){
-  try{return new Date(iso).toLocaleString();}catch{return iso||'';}
-}
-function renderPoints(points){
-  pointsLayer.clearLayers();
-  heatLayer.setLatLngs([]);
-  els.table.innerHTML='';
-  els.mapTitle.textContent='Mapa de calor '+selectedDevice();
-
-  if(!points.length){
-    els.empty.classList.remove('hidden');
-    return;
-  }
-  els.empty.classList.add('hidden');
-
-  const heat=[];
-  for(const p of points){
-    const lat=Number(p.lat), lon=Number(p.lon), rssi=Number(p.rssi), snr=Number(p.snr);
-    if(Number.isFinite(lat)&&Number.isFinite(lon)&&Number.isFinite(rssi)){
-      heat.push([lat,lon,rssiToIntensity(rssi)]);
-      L.circleMarker([lat,lon],{radius:7,weight:2,fillOpacity:.85})
-        .bindPopup(`<b>${escapeHtml(selectedDevice())}</b><br>RSSI: ${rssi} dBm<br>SNR: ${snr} dB<br>GW: ${escapeHtml(p.gw_count)}<br>Payload: ${escapeHtml(p.payload)}<br>${escapeHtml(fmtTime(p.timestamp))}`)
-        .addTo(pointsLayer);
-    }
-  }
-  heatLayer.setLatLngs(heat);
-  const bounds=pointsLayer.getBounds?.();
-  if(bounds && bounds.isValid()) map.fitBounds(bounds.pad(.25),{maxZoom:18});
-
-  for(const p of points.slice(-25).reverse()){
-    const tr=document.createElement('tr');
-    tr.innerHTML=`<td>${escapeHtml(fmtTime(p.timestamp))}</td><td>${escapeHtml(p.rssi)}</td><td>${escapeHtml(p.snr)}</td><td>${escapeHtml(p.gw_count)}</td><td>${escapeHtml(p.payload)}</td><td>${escapeHtml(Number(p.lat).toFixed(6))}</td><td>${escapeHtml(Number(p.lon).toFixed(6))}</td>`;
-    els.table.appendChild(tr);
-  }
-}
-
-function jsonp(params,timeoutMs=12000){
-  return new Promise((resolve,reject)=>{
-    if(!CONFIG.API_URL){reject(new Error('API_URL no configurada'));return;}
-    const cb='lfl_cb_'+Math.random().toString(36).slice(2);
-    const url=new URL(CONFIG.API_URL);
-    for(const [k,v] of Object.entries(params)) url.searchParams.set(k,v==null?'':String(v));
-    if(CONFIG.API_TOKEN) url.searchParams.set('token',CONFIG.API_TOKEN);
-    url.searchParams.set('callback',cb);
-    const script=document.createElement('script');
-    const timer=setTimeout(()=>cleanup(new Error('Timeout API')),timeoutMs);
-    function cleanup(err,data){
-      clearTimeout(timer);
-      delete window[cb];
-      script.remove();
-      err?reject(err):resolve(data);
-    }
-    window[cb]=data=>cleanup(null,data);
-    script.onerror=()=>cleanup(new Error('Error cargando API'));
-    script.src=url.toString();
-    document.body.appendChild(script);
-  });
-}
-
-async function loadPoints(){
-  try{
-    if(!CONFIG.API_URL){setStatus(els.api,'API no configurada','warn');renderPoints([]);return;}
-    setStatus(els.api,'Consultando...','warn');
-    const res=await jsonp({action:'get_points',dev_id:selectedDevice()});
-    if(!res.ok) throw new Error(res.error||'Respuesta API inválida');
-    setStatus(els.api,'OK','ok');
-    renderPoints(res.points||[]);
-  }catch(err){
-    setStatus(els.api,'Error','bad');
-    log('API get_points: '+err.message);
-  }
-}
-
-function appendRx(text){
-  rxBuffer+=text;
-  if(rxBuffer.length>16000) rxBuffer=rxBuffer.slice(-16000);
-  log('RX '+text.replace(/\r?\n/g,' | '));
-  for(const waiter of [...waiters]){
-    const match=rxBuffer.match(waiter.regex);
-    if(match){
-      waiters=waiters.filter(w=>w!==waiter);
-      clearTimeout(waiter.timer);
-      waiter.resolve(match);
-    }
-  }
-}
-function waitFor(regex,timeoutMs,label){
-  return new Promise((resolve,reject)=>{
-    const match=rxBuffer.match(regex);
-    if(match){resolve(match);return;}
-    const waiter={regex,resolve,reject,timer:null,label};
-    waiter.timer=setTimeout(()=>{
-      waiters=waiters.filter(w=>w!==waiter);
-      reject(new Error('Timeout esperando '+label));
-    },timeoutMs);
-    waiters.push(waiter);
-  });
-}
-
-async function sendCommand(command){
-  if(!bleRxChar) throw new Error('BLE no conectado');
-  const data=enc.encode(command.trim()+'\r\n');
-  log('TX '+command.trim());
-  for(let i=0;i<data.length;i+=20){
-    const chunk=data.slice(i,i+20);
-    if(bleRxChar.writeValueWithoutResponse) await bleRxChar.writeValueWithoutResponse(chunk);
-    else await bleRxChar.writeValue(chunk);
-    await new Promise(r=>setTimeout(r,12));
-  }
-}
-async function sendAndWait(command,regex,timeoutMs,label){
-  rxBuffer='';
-  await sendCommand(command);
-  return waitFor(regex,timeoutMs,label);
-}
-
-async function connectBle(){
-  try{
-    setProcess('Buscando BLE...','warn');
-    await disconnect(true);
-    if(!('bluetooth' in navigator)) throw new Error('Este navegador no soporta Web Bluetooth');
-    bleDevice=await navigator.bluetooth.requestDevice({filters:[{namePrefix:'LoRaFieldLink'}],optionalServices:[NUS_SERVICE]});
-    bleDevice.addEventListener('gattserverdisconnected',()=>{
-      bleRxChar=null;bleTxChar=null;setStatus(els.ble,'Desconectado','warn');setJoined(-1);setProcess('BLE desconectado','warn');
-    });
-    const server=await bleDevice.gatt.connect();
-    const service=await server.getPrimaryService(NUS_SERVICE);
-    bleRxChar=await service.getCharacteristic(NUS_RX);
-    bleTxChar=await service.getCharacteristic(NUS_TX);
-    await bleTxChar.startNotifications();
-    bleTxChar.addEventListener('characteristicvaluechanged',e=>appendRx(dec.decode(e.target.value)));
-    setStatus(els.ble,'Conectado','ok');
-    setProcess('BLE conectado. Verificando JOIN...','warn');
-    await ensureJoined();
-  }catch(err){
-    setStatus(els.ble,'Error','bad');
-    setProcess(err.message,'bad');
-    log('BLE error: '+err.message);
-  }finally{refreshActionState();}
-}
-async function disconnect(silent=false){
-  waiters.forEach(w=>{clearTimeout(w.timer);w.reject(new Error('Desconectado'));});
-  waiters=[];
-  if(bleDevice?.gatt?.connected) try{bleDevice.gatt.disconnect();}catch{}
-  bleDevice=null;bleRxChar=null;bleTxChar=null;setStatus(els.ble,'Desconectado','warn');setJoined(-1);if(!silent)setProcess('Desconectado','warn');refreshActionState();
-}
-
-async function ensureJoined(){
-  try{
-    setProcess('Consultando estado JOIN...','warn');
-    const njs=await sendAndWait('AT+NJS=?',/AT\+NJS=([01])|\bNJS=([01])|\b([01])\s*\r?\n\s*OK/i,7000,'AT+NJS');
-    const joined=Number(njs[1]||njs[2]||njs[3]);
-    if(joined===1){setJoined(1);setProcess('Listo para tomar datos','ok');return true;}
-    setProcess('No unido. Intentando JOIN...','warn');
-    await sendCommand('AT+JOIN');
-    await waitFor(/\+EVT:JOINED|AT\+NJS=1/i,CONFIG.JOIN_TIMEOUT_MS,'JOIN');
-    setJoined(1);setProcess('JOIN exitoso. Listo para tomar datos','ok');return true;
-  }catch(err){
-    setJoined(0);setProcess('JOIN falló: '+err.message,'bad');log('JOIN falló: '+err.message);return false;
-  }
-}
-
-function readGps(){
-  return new Promise((resolve,reject)=>{
-    if(!('geolocation' in navigator)){reject(new Error('GPS no disponible'));return;}
-    setStatus(els.gps,'Leyendo...','warn');
-    navigator.geolocation.getCurrentPosition(pos=>{
-      latestGps={timestamp:new Date(pos.timestamp).toISOString(),lat:pos.coords.latitude,lon:pos.coords.longitude,accuracy:pos.coords.accuracy};
-      setStatus(els.gps,'OK ±'+Math.round(latestGps.accuracy)+' m','ok');
-      els.lastAccuracy.textContent='±'+Math.round(latestGps.accuracy)+' m';
-      resolve(latestGps);
-    },err=>{setStatus(els.gps,'Error','bad');reject(err);},{enableHighAccuracy:true,timeout:15000,maximumAge:0});
-  });
-}
-function nextPayload(dev){
-  const key='lfl-counter-'+dev;
-  const n=(Number(localStorage.getItem(key)||'0')+1);
-  localStorage.setItem(key,String(n>255?1:n));
-  const d=devNumber(dev).toString(16).padStart(2,'0').toUpperCase();
-  const c=(n>255?1:n).toString(16).padStart(2,'0').toUpperCase();
-  return d+c;
-}
-function parseLinkCheck(match){
-  return {result:Number(match[1]),demod_margin:Number(match[2]),gw_count:Number(match[3]),rssi:Number(match[4]),snr:Number(match[5]),raw:match[0]};
-}
-async function takeSample(){
-  if(measuring)return;
-  measuring=true;refreshActionState();
-  const dev=selectedDevice();
-  try{
-    setProcess('Leyendo GPS...','warn');
-    const gps=await readGps();
-    if(joinState!==1){
-      const ok=await ensureJoined();
-      if(!ok) throw new Error('No hay JOIN LoRaWAN');
-    }
-    const payload=nextPayload(dev);
-    els.lastPayload.textContent=payload;
-    setProcess('Solicitando LinkCheck...','warn');
-    await sendAndWait('AT+LINKCHECK=1',/OK|AT_PARAM_ERROR|ERROR/i,8000,'OK de LINKCHECK');
-    setProcess('Enviando uplink...','warn');
-    rxBuffer='';
-    await sendCommand('AT+SEND=2:'+payload);
-    const match=await waitFor(/\+EVT:LINKCHECK:([\-\d]+),([\-\d]+),([\-\d]+),([\-\d]+),([\-\d]+)/,CONFIG.LINKCHECK_TIMEOUT_MS,'+EVT:LINKCHECK');
-    const link=parseLinkCheck(match);
-    if(link.result!==0) throw new Error('LinkCheck falló con código '+link.result);
-    els.lastRssi.textContent=link.rssi;
-    els.lastSnr.textContent=link.snr;
-    els.lastGw.textContent=link.gw_count;
-    setProcess('Guardando dato...','warn');
-    const res=await jsonp({action:'save_sample',dev_id:dev,timestamp:new Date().toISOString(),lat:gps.lat,lon:gps.lon,rssi:link.rssi,snr:link.snr,gw_count:link.gw_count,payload});
-    if(!res.ok) throw new Error(res.error||'No se pudo guardar');
-    setProcess('Dato guardado','ok');
-    await loadPoints();
-  }catch(err){
-    setProcess(err.message,'bad');
-    log('Toma fallida: '+err.message);
-  }finally{
-    measuring=false;refreshActionState();
-  }
-}
-
-function initConfigState(){
-  if(!CONFIG.API_URL){els.configWarning.classList.remove('hidden');setStatus(els.api,'API no configurada','warn');}
-  else{setStatus(els.api,'Configurada','ok');}
-}
-
-els.connect.onclick=connectBle;
-els.disconnect.onclick=()=>disconnect();
-els.retry.onclick=ensureJoined;
-els.take.onclick=takeSample;
-els.deviceSelect.onchange=()=>{localStorage.setItem('lfl-device',selectedDevice());loadPoints();};
-
-initDevices();
-initMap();
-initConfigState();
-loadPoints();
-refreshActionState();
-log('Aplicación lista. Selecciona dispositivo y conecta BLE.');
+const NUS_SERVICE='6e400001-b5a3-f393-e0a9-e50e24dcca9e',NUS_RX='6e400002-b5a3-f393-e0a9-e50e24dcca9e',NUS_TX='6e400003-b5a3-f393-e0a9-e50e24dcca9e';
+let bleDevice=null,bleRxChar=null,bleTxChar=null,rxBuffer='',joinState=-1,measuring=false,waiters=[],pointsLayer=null,heatLayer=null,map=null;
+const enc=new TextEncoder(),dec=new TextDecoder(),$=id=>document.getElementById(id);
+const els={deviceSelect:$('deviceSelect'),connect:$('connectBtn'),disconnect:$('disconnectBtn'),retry:$('retryJoinBtn'),take:$('takeSampleBtn'),ble:$('bleStatus'),join:$('joinStatus'),gps:$('gpsStatus'),api:$('apiStatus'),process:$('processStatus'),log:$('log'),lastRssi:$('lastRssi'),lastSnr:$('lastSnr'),lastGw:$('lastGw'),lastPayload:$('lastPayload'),lastAccuracy:$('lastAccuracy'),mapTitle:$('mapTitle'),empty:$('emptyMapMsg'),table:$('pointsTable'),configWarning:$('configWarning')};
+function setStatus(el,text,kind=''){el.textContent=text;el.className='status'+(kind?' '+kind:'');}
+function log(msg){els.log.textContent+='['+new Date().toLocaleTimeString()+'] '+msg+'\n';els.log.scrollTop=els.log.scrollHeight;}
+function deviceList(){const out=[];for(let i=Number(CONFIG.DEVICE_START);i<=Number(CONFIG.DEVICE_END);i++)out.push('Dev-'+String(i).padStart(2,'0'));return out;}
+function selectedDevice(){return els.deviceSelect.value;}function devNumber(dev){return Number(String(dev).replace('Dev-',''));}
+function setProcess(text,kind=''){setStatus(els.process,text,kind);}function setJoined(value){joinState=value;if(value===1){setStatus(els.join,'Unido a TTN','ok');els.retry.classList.add('hidden');}else if(value===0){setStatus(els.join,'No unido','bad');els.retry.classList.remove('hidden');}else{setStatus(els.join,'Sin verificar','warn');els.retry.classList.add('hidden');}refreshActionState();}
+function refreshActionState(){els.take.disabled=!(bleRxChar&&joinState===1&&!measuring);}function escapeHtml(s){return String(s).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
+function initDevices(){els.deviceSelect.innerHTML='';for(const dev of deviceList()){const opt=document.createElement('option');opt.value=dev;opt.textContent=dev;els.deviceSelect.appendChild(opt);}const remembered=localStorage.getItem('lfl-device');if(remembered&&deviceList().includes(remembered))els.deviceSelect.value=remembered;}
+function initMap(){map=L.map('map',{zoomControl:true}).setView([CONFIG.GATEWAY_LAT,CONFIG.GATEWAY_LON],CONFIG.MAP_ZOOM);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:20,attribution:'&copy; OpenStreetMap'}).addTo(map);L.marker([CONFIG.GATEWAY_LAT,CONFIG.GATEWAY_LON],{title:'Gateway Icesi'}).addTo(map).bindPopup('<b>Gateway Icesi</b><br>Referencia de la práctica');pointsLayer=L.layerGroup().addTo(map);heatLayer=L.heatLayer([],{radius:34,blur:24,maxZoom:19,minOpacity:.32}).addTo(map);setTimeout(()=>map.invalidateSize(),300);}
+function rssiToIntensity(rssi){return Math.max(0,Math.min(1,(Number(rssi)+120)/60));}function fmtTime(iso){try{return new Date(iso).toLocaleString();}catch{return iso||'';}}
+function renderPoints(points){pointsLayer.clearLayers();heatLayer.setLatLngs([]);els.table.innerHTML='';els.mapTitle.textContent='Mapa de calor '+selectedDevice();if(!points.length){els.empty.classList.remove('hidden');map.setView([CONFIG.GATEWAY_LAT,CONFIG.GATEWAY_LON],CONFIG.MAP_ZOOM);setTimeout(()=>map.invalidateSize(),120);return;}els.empty.classList.add('hidden');const heat=[];for(const p of points){const lat=Number(p.lat),lon=Number(p.lon),rssi=Number(p.rssi),snr=Number(p.snr);if(Number.isFinite(lat)&&Number.isFinite(lon)&&Number.isFinite(rssi)){heat.push([lat,lon,rssiToIntensity(rssi)]);L.circleMarker([lat,lon],{radius:7,weight:2,fillOpacity:.85}).bindPopup(`<b>${escapeHtml(selectedDevice())}</b><br>RSSI: ${rssi} dBm<br>SNR: ${snr} dB<br>GW: ${escapeHtml(p.gw_count)}<br>Payload: ${escapeHtml(p.payload)}<br>${escapeHtml(fmtTime(p.timestamp))}`).addTo(pointsLayer);}}heatLayer.setLatLngs(heat);const bounds=pointsLayer.getBounds?.();if(bounds&&bounds.isValid())map.fitBounds(bounds.pad(.25),{maxZoom:18});setTimeout(()=>map.invalidateSize(),120);for(const p of points.slice(-25).reverse()){const tr=document.createElement('tr');tr.innerHTML=`<td>${escapeHtml(fmtTime(p.timestamp))}</td><td>${escapeHtml(p.rssi)}</td><td>${escapeHtml(p.snr)}</td><td>${escapeHtml(p.gw_count)}</td><td>${escapeHtml(p.payload)}</td><td>${escapeHtml(Number(p.lat).toFixed(6))}</td><td>${escapeHtml(Number(p.lon).toFixed(6))}</td>`;els.table.appendChild(tr);}}
+function jsonp(params,timeoutMs=12000){return new Promise((resolve,reject)=>{if(!CONFIG.API_URL){reject(new Error('API_URL no configurada'));return;}const cb='lfl_cb_'+Math.random().toString(36).slice(2);const url=new URL(CONFIG.API_URL);for(const[k,v]of Object.entries(params))url.searchParams.set(k,v==null?'':String(v));if(CONFIG.API_TOKEN)url.searchParams.set('token',CONFIG.API_TOKEN);url.searchParams.set('callback',cb);const script=document.createElement('script');const timer=setTimeout(()=>cleanup(new Error('Timeout API')),timeoutMs);function cleanup(err,data){clearTimeout(timer);delete window[cb];script.remove();err?reject(err):resolve(data);}window[cb]=data=>cleanup(null,data);script.onerror=()=>cleanup(new Error('Error cargando API'));script.src=url.toString();document.body.appendChild(script);});}
+async function loadPoints(){try{if(!CONFIG.API_URL){setStatus(els.api,'API no configurada','warn');renderPoints([]);return;}setStatus(els.api,'Consultando...','warn');const res=await jsonp({action:'get_points',dev_id:selectedDevice()});if(!res.ok)throw new Error(res.error||'Respuesta API inválida');setStatus(els.api,'OK','ok');renderPoints(res.points||[]);}catch(err){setStatus(els.api,'Error','bad');log('API get_points: '+err.message);}}
+function appendRx(text){rxBuffer+=text;if(rxBuffer.length>16000)rxBuffer=rxBuffer.slice(-16000);log('RX '+text.replace(/\r?\n/g,' | '));for(const waiter of[...waiters]){const match=rxBuffer.match(waiter.regex);if(match){waiters=waiters.filter(w=>w!==waiter);clearTimeout(waiter.timer);waiter.resolve(match);}}}
+function waitFor(regex,timeoutMs,label){return new Promise((resolve,reject)=>{const match=rxBuffer.match(regex);if(match){resolve(match);return;}const waiter={regex,resolve,reject,timer:null,label};waiter.timer=setTimeout(()=>{waiters=waiters.filter(w=>w!==waiter);reject(new Error('Timeout esperando '+label));},timeoutMs);waiters.push(waiter);});}
+async function sendCommand(command){if(!bleRxChar)throw new Error('BLE no conectado');const data=enc.encode(command.trim()+'\r\n');log('TX '+command.trim());for(let i=0;i<data.length;i+=20){const chunk=data.slice(i,i+20);if(bleRxChar.writeValueWithoutResponse)await bleRxChar.writeValueWithoutResponse(chunk);else await bleRxChar.writeValue(chunk);await new Promise(r=>setTimeout(r,12));}}
+async function sendAndWait(command,regex,timeoutMs,label){rxBuffer='';await sendCommand(command);return waitFor(regex,timeoutMs,label);}
+async function connectBle(){try{setProcess('Buscando BLE...','warn');await disconnect(true);if(!('bluetooth'in navigator))throw new Error('Este navegador no soporta Web Bluetooth');bleDevice=await navigator.bluetooth.requestDevice({filters:[{namePrefix:'LoRaFieldLink'}],optionalServices:[NUS_SERVICE]});bleDevice.addEventListener('gattserverdisconnected',()=>{bleRxChar=null;bleTxChar=null;setStatus(els.ble,'Desconectado','warn');setJoined(-1);setProcess('BLE desconectado','warn');});const server=await bleDevice.gatt.connect();const service=await server.getPrimaryService(NUS_SERVICE);bleRxChar=await service.getCharacteristic(NUS_RX);bleTxChar=await service.getCharacteristic(NUS_TX);await bleTxChar.startNotifications();bleTxChar.addEventListener('characteristicvaluechanged',e=>appendRx(dec.decode(e.target.value)));setStatus(els.ble,'Conectado','ok');setProcess('BLE conectado. Verificando JOIN...','warn');await ensureJoined();}catch(err){setStatus(els.ble,'Error','bad');setProcess(err.message,'bad');log('BLE error: '+err.message);}finally{refreshActionState();}}
+async function disconnect(silent=false){waiters.forEach(w=>{clearTimeout(w.timer);w.reject(new Error('Desconectado'));});waiters=[];if(bleDevice?.gatt?.connected)try{bleDevice.gatt.disconnect();}catch{}bleDevice=null;bleRxChar=null;bleTxChar=null;setStatus(els.ble,'Desconectado','warn');setJoined(-1);if(!silent)setProcess('Desconectado','warn');refreshActionState();}
+async function ensureJoined(){try{setProcess('Consultando estado JOIN...','warn');const njs=await sendAndWait('AT+NJS=?',/AT\+NJS=([01])|\bNJS=([01])|\b([01])\s*\r?\n\s*OK/i,7000,'AT+NJS');const joined=Number(njs[1]||njs[2]||njs[3]);if(joined===1){setJoined(1);setProcess('Listo para tomar datos','ok');return true;}setProcess('No unido. Intentando JOIN...','warn');await sendCommand('AT+JOIN');await waitFor(/\+EVT:JOINED|AT\+NJS=1/i,CONFIG.JOIN_TIMEOUT_MS,'JOIN');setJoined(1);setProcess('JOIN exitoso. Listo para tomar datos','ok');return true;}catch(err){setJoined(0);setProcess('JOIN falló: '+err.message,'bad');log('JOIN falló: '+err.message);return false;}}
+function readGps(){return new Promise((resolve,reject)=>{if(!('geolocation'in navigator)){reject(new Error('GPS no disponible'));return;}setStatus(els.gps,'Leyendo...','warn');navigator.geolocation.getCurrentPosition(pos=>{const gps={timestamp:new Date(pos.timestamp).toISOString(),lat:pos.coords.latitude,lon:pos.coords.longitude,accuracy:pos.coords.accuracy};setStatus(els.gps,'OK ±'+Math.round(gps.accuracy)+' m','ok');els.lastAccuracy.textContent='±'+Math.round(gps.accuracy)+' m';resolve(gps);},err=>{setStatus(els.gps,'Error','bad');reject(err);},{enableHighAccuracy:true,timeout:15000,maximumAge:0});});}
+function nextPayload(dev){const key='lfl-counter-'+dev;let n=Number(localStorage.getItem(key)||'0')+1;if(n>255)n=1;localStorage.setItem(key,String(n));const d=devNumber(dev).toString(16).padStart(2,'0').toUpperCase();const c=n.toString(16).padStart(2,'0').toUpperCase();return d+c;}
+const LINKCHECK_RE=/\+EVT:LINKCHECK[:,]([\-\d]+)[:,]([\-\d]+)[:,]([\-\d]+)[:,]([\-\d]+)[:,]([\-\d]+)/;
+function parseLinkCheck(match){return{result:Number(match[1]),demod_margin:Number(match[2]),gw_count:Number(match[3]),rssi:Number(match[4]),snr:Number(match[5]),raw:match[0]};}
+async function takeSample(){if(measuring)return;measuring=true;refreshActionState();const dev=selectedDevice();try{setProcess('Leyendo GPS...','warn');const gps=await readGps();if(joinState!==1){const ok=await ensureJoined();if(!ok)throw new Error('No hay JOIN LoRaWAN');}const payload=nextPayload(dev);els.lastPayload.textContent=payload;setProcess('Solicitando LinkCheck...','warn');await sendAndWait('AT+LINKCHECK=1',/OK|AT_PARAM_ERROR|ERROR/i,8000,'OK de LINKCHECK');setProcess('Enviando uplink...','warn');rxBuffer='';await sendCommand('AT+SEND=2:'+payload);const match=await waitFor(LINKCHECK_RE,CONFIG.LINKCHECK_TIMEOUT_MS,'+EVT:LINKCHECK');const link=parseLinkCheck(match);if(link.result!==0)throw new Error('LinkCheck falló con código '+link.result);els.lastRssi.textContent=link.rssi;els.lastSnr.textContent=link.snr;els.lastGw.textContent=link.gw_count;setProcess('Guardando dato...','warn');const res=await jsonp({action:'save_sample',dev_id:dev,timestamp:new Date().toISOString(),lat:gps.lat,lon:gps.lon,rssi:link.rssi,snr:link.snr,gw_count:link.gw_count,payload});if(!res.ok)throw new Error(res.error||'No se pudo guardar');setProcess('Dato guardado','ok');await loadPoints();}catch(err){setProcess(err.message,'bad');log('Toma fallida: '+err.message);}finally{measuring=false;refreshActionState();}}
+function initConfigState(){if(!CONFIG.API_URL){els.configWarning.classList.remove('hidden');setStatus(els.api,'API no configurada','warn');}else{setStatus(els.api,'Configurada','ok');}}
+els.connect.onclick=connectBle;els.disconnect.onclick=()=>disconnect();els.retry.onclick=ensureJoined;els.take.onclick=takeSample;els.deviceSelect.onchange=()=>{localStorage.setItem('lfl-device',selectedDevice());loadPoints();};window.addEventListener('resize',()=>map&&map.invalidateSize());
+initDevices();initMap();initConfigState();loadPoints();refreshActionState();log('Aplicación lista. Selecciona dispositivo y conecta BLE.');
 </script>
 </body>
 </html>

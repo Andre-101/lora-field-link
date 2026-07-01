@@ -37,6 +37,7 @@ jobs:
         run: |
           import json
           import os
+          from pathlib import Path
 
           def number_env(name, default):
               raw = os.environ.get(name, '')
@@ -59,10 +60,22 @@ jobs:
               'MAP_ZOOM': number_env('LFL_MAP_ZOOM', 17),
           }
 
-          with open('config.js', 'w', encoding='utf-8') as f:
-              f.write('window.LFL_CONFIG = ')
-              f.write(json.dumps(config, ensure_ascii=False, indent=2))
-              f.write(';\n')
+          Path('config.js').write_text(
+              'window.LFL_CONFIG = ' + json.dumps(config, ensure_ascii=False, indent=2) + ';\n',
+              encoding='utf-8'
+          )
+
+          index = Path('index.html')
+          html = index.read_text(encoding='utf-8')
+          html = html.replace(
+              'https://upload.wikimedia.org/wikipedia/commons/4/4a/Logo_universidad_icesi.svg',
+              'assets/icesi-logo.svg'
+          )
+          index.write_text(html, encoding='utf-8')
+
+          print('config.js generated')
+          print('API_URL configured:', bool(config['API_URL']))
+          print('API_TOKEN configured:', bool(config['API_TOKEN']))
 
       - name: Setup Pages
         uses: actions/configure-pages@v5

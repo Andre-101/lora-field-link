@@ -1,0 +1,60 @@
+name: Deploy GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Generate runtime config
+        shell: bash
+        env:
+          LFL_APPS_SCRIPT_URL: ${{ vars.LFL_APPS_SCRIPT_URL }}
+          LFL_API_TOKEN: ${{ secrets.LFL_API_TOKEN }}
+          LFL_DEVICE_START: ${{ vars.LFL_DEVICE_START }}
+          LFL_DEVICE_END: ${{ vars.LFL_DEVICE_END }}
+          LFL_GATEWAY_LAT: ${{ vars.LFL_GATEWAY_LAT }}
+          LFL_GATEWAY_LON: ${{ vars.LFL_GATEWAY_LON }}
+          LFL_MAP_ZOOM: ${{ vars.LFL_MAP_ZOOM }}
+        run: |
+          cat > config.js <<EOF
+          window.LFL_CONFIG = {
+            API_URL: '${LFL_APPS_SCRIPT_URL}',
+            API_TOKEN: '${LFL_API_TOKEN}',
+            DEVICE_START: Number('${LFL_DEVICE_START:-1}'),
+            DEVICE_END: Number('${LFL_DEVICE_END:-8}'),
+            GATEWAY_LAT: Number('${LFL_GATEWAY_LAT:-3.341264}'),
+            GATEWAY_LON: Number('${LFL_GATEWAY_LON:--76.529448}'),
+            MAP_ZOOM: Number('${LFL_MAP_ZOOM:-17}')
+          };
+          EOF
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
